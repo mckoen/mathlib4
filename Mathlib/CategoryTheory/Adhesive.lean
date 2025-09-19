@@ -54,6 +54,16 @@ def IsPushout.IsVanKampen (_ : IsPushout f g h i) : Prop :=
     (_ : IsPullback g' αW αY g) (_ : CommSq h' αX αZ h) (_ : CommSq i' αY αZ i)
     (_ : CommSq f' g' h' i'), IsPushout f' g' h' i' ↔ IsPullback h' αX αZ h ∧ IsPullback i' αY αZ i
 
+/-- An alternative formulation for a pushout being a van Kampen colimit.
+See `IsPushout.isVanKampen_iff'` below. -/
+@[nolint unusedArguments]
+def IsPushout.IsVanKampen' (_ : IsPushout f g h i) : Prop :=
+  ∀ ⦃X' Y' Z' : C⦄ (h' : X' ⟶ Z') (i' : Y' ⟶ Z') (αX : X' ⟶ X) (αY : Y' ⟶ Y) (αZ : Z' ⟶ Z)
+    (_ : CommSq h' αX αZ h) (_ : CommSq i' αY αZ i) [HasPullback αX f],
+    IsPullback h' αX αZ h ∧ IsPullback i' αY αZ i ↔
+      ∃ (W' : C) (f' : W' ⟶ X') (g' : W' ⟶ Y') (αW : W' ⟶ W),
+    IsPullback f' αW αX f ∧ IsPullback g' αW αY g ∧ IsPushout f' g' h' i'
+
 theorem IsPushout.IsVanKampen.flip {H : IsPushout f g h i} (H' : H.IsVanKampen) :
     H.flip.IsVanKampen := by
   introv W' hf hg hh hi w
@@ -108,6 +118,59 @@ theorem IsPushout.isVanKampen_iff (H : IsPushout f g h i) :
         · dsimp; rw [PushoutCocone.condition_zero]; exact hf.paste_horiz h₁
         exacts [h₁, h₂]
     · exact ⟨fun h => h.2, fun h => ⟨w, h⟩⟩
+
+lemma IsPushout.isVanKampen_iff' {H : IsPushout f g h i} :
+    H.IsVanKampen → H.IsVanKampen' := by
+  intro VK X' Y' Z' h' i' αX αY αZ csh csi _
+  constructor
+  · intro ⟨pbh, pbi⟩
+    let l := pbi.lift ((pullback.fst αX f) ≫ h') ((pullback.snd αX f) ≫ g)
+        (by simp only [Category.assoc, csh.w, pullback.condition_assoc, ← H.w])
+    use (pullback αX f), (pullback.fst αX f), l, (pullback.snd αX f)
+    refine ⟨?_, ?_, ?_⟩
+    · exact IsPullback.of_hasPullback αX f
+    · refine IsPullback.of_right' ?_ pbi
+      rw [← H.w]
+      refine IsPullback.paste_horiz (IsPullback.of_hasPullback αX f) pbh
+    · refine (VK (pullback.fst αX f) l  h' i' (pullback.snd αX f) αX αY αZ
+        (IsPullback.of_hasPullback αX f) ?_
+          pbh.toCommSq pbi.toCommSq ⟨by simp only [IsPullback.lift_fst, l]⟩).2 ⟨pbh, pbi⟩
+      · dsimp [l]
+        refine IsPullback.of_right' ?_ pbi
+        rw [← H.w]
+        refine IsPullback.paste_horiz (IsPullback.of_hasPullback αX f) pbh
+  · intro ⟨W', f', g', αW, pbf, pbg, H'⟩
+    rwa [← VK f' g' h' i' αW αX αY αZ pbf pbg csh csi H'.toCommSq]
+      /-
+  · intro VK' W' X' Y' Z' f' g' h' i' αW αX αY αZ pbf pbg csh csi w
+    rw [VK' h' i' αX αY αZ csh csi]
+    constructor
+    · exact fun H' ↦ ⟨W', f', g', αW, ⟨pbf, pbg, H'⟩⟩
+    · intro ⟨W'', f'', g'', αW'', pbf'', pbg'', H'⟩
+      sorry
+      refine H'.of_iso ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+      · exact IsPullback.isoIsPullback _ _ pbf'' pbf
+      · exact Iso.refl _
+      · exact Iso.refl _
+      · exact Iso.refl _
+      · simp only [Iso.refl_hom, Category.comp_id, IsPullback.isoIsPullback_hom_fst]
+      · simp
+        have := H'.w
+        have := IsPullback.isoIsPullback _ _ pbf'' pbf
+        have := IsPullback.isoIsPullback _ _ pbg'' pbg
+        sorry
+      · simp
+      · simp
+      -/
+
+lemma IsPushout.VanKampen_ext [HasPullbacks C] {H : IsPushout f g h i} (H' : H.IsVanKampen)
+    {X' Y' Z' : C} {h' : X' ⟶ Z'} {i' : Y' ⟶ Z'}
+    {αX : X' ⟶ X} {αY : Y' ⟶ Y} {αZ : Z' ⟶ Z}
+    (h₁ : IsPullback h' αX αZ h) (h₂ : IsPullback i' αY αZ i) (αZ' : Z' ⟶ Z)
+    (h'_eq : h' ≫ αZ = h' ≫ αZ') (i'_eq : i' ≫ αZ = i' ≫ αZ') : αZ = αZ' := by
+  obtain ⟨W, f', g', αW, h₃, h₄, h₅⟩ :=
+    (isVanKampen_iff' H' h' i' αX αY αZ h₁.toCommSq h₂.toCommSq).1 ⟨h₁, h₂⟩
+  exact h₅.hom_ext h'_eq i'_eq
 
 theorem is_coprod_iff_isPushout {X E Y YE : C} (c : BinaryCofan X E) (hc : IsColimit c) {f : X ⟶ Y}
     {iY : Y ⟶ YE} {fE : c.pt ⟶ YE} (H : CommSq f c.inl iY fE) :
@@ -241,6 +304,59 @@ theorem Adhesive.mono_of_isPushout_of_mono_left [Adhesive C] (H : IsPushout f g 
 theorem Adhesive.mono_of_isPushout_of_mono_right [Adhesive C] (H : IsPushout f g h i) [Mono g] :
     Mono h :=
   (Adhesive.van_kampen' H).mono_of_mono_right
+
+lemma Adhesive.ext [Adhesive C] [Mono f] (H : IsPushout f g h i)
+    {X' Y' Z' : C} {h' : X' ⟶ Z'} {i' : Y' ⟶ Z'}
+    {αX : X' ⟶ X} {αY : Y' ⟶ Y} (αZ : Z' ⟶ Z)
+    (h₁ : IsPullback h' αX αZ h) (h₂ : IsPullback i' αY αZ i) (αZ' : Z' ⟶ Z)
+    (h'_eq : h' ≫ αZ = h' ≫ αZ') (i'_eq : i' ≫ αZ = i' ≫ αZ') : αZ = αZ' := by
+  letI := hasPullback_symmetry f αX
+  obtain ⟨_, _, _, _, _, _, h₅⟩ := (IsPushout.isVanKampen_iff'
+    (Adhesive.van_kampen H) _ _ _ _ _ h₁.toCommSq h₂.toCommSq).1 ⟨h₁, h₂⟩
+  exact h₅.hom_ext h'_eq i'_eq
+
+noncomputable
+example [Adhesive C] {Z A B : C} {a : A ⟶ Z} {b : B ⟶ Z} [Mono a] [Mono b] :
+    Mono (pushout.desc a b pullback.condition) where
+  right_cancellation {K} f g eq := by
+    let u := pushout.inl (pullback.fst a b) (pullback.snd a b)
+    let v := pushout.inr (pullback.fst a b) (pullback.snd a b)
+
+    letI : Mono u :=
+      Adhesive.mono_of_isPushout_of_mono_right
+        (IsPushout.of_hasPushout (pullback.fst a b) (pullback.snd a b))
+    letI : Mono v :=
+      Adhesive.mono_of_isPushout_of_mono_left
+        (IsPushout.of_hasPushout (pullback.fst a b) (pullback.snd a b))
+    letI : HasPullback f u := hasPullback_symmetry u f
+    letI : HasPullback g u := hasPullback_symmetry u g
+    letI : HasPullback f v := hasPullback_symmetry v f
+    letI : HasPullback g v := hasPullback_symmetry v g
+    let f_sq_left := IsPullback.of_hasPullback f u
+    let f_sq_right := IsPullback.of_hasPullback f v
+    let g_sq_left := IsPullback.of_hasPullback g u
+    let g_sq_right := IsPullback.of_hasPullback g v
+
+    let l₁ := pullback.fst f u
+    let f₁ := pullback.snd f u
+    let l₂ := pullback.fst f v
+    let f₂ := pullback.snd f v
+
+    let m₁ := pullback.fst g u
+    let g₁ := pullback.snd g u
+    let m₂ := pullback.fst g v
+    let g₂ := pullback.snd g v
+
+    let sq₁₁ := IsPullback.of_hasPullback m₁ l₁
+    let sq₁₂ := IsPullback.of_hasPullback m₁ l₂
+    let sq₂₁ := IsPullback.of_hasPullback m₂ l₁
+    let sq₂₂ := IsPullback.of_hasPullback m₂ l₂
+
+    symm
+    apply Adhesive.ext (IsPushout.of_hasPushout _ _) _ g_sq_left g_sq_right _
+    · change m₁ ≫ _ = m₁ ≫ _
+      sorry
+    · sorry
 
 instance Type.adhesive : Adhesive (Type u) :=
   ⟨fun {_ _ _ _ f _ _ _ _} H =>
