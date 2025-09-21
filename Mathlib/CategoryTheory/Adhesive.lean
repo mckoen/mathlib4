@@ -119,7 +119,7 @@ theorem IsPushout.isVanKampen_iff (H : IsPushout f g h i) :
         exacts [h₁, h₂]
     · exact ⟨fun h => h.2, fun h => ⟨w, h⟩⟩
 
-lemma IsPushout.isVanKampen_iff' {H : IsPushout f g h i} :
+lemma IsPushout.isVanKampen'_ofIsVanKampen {H : IsPushout f g h i} :
     H.IsVanKampen → H.IsVanKampen' := by
   intro VK X' Y' Z' h' i' αX αY αZ csh csi _
   constructor
@@ -142,13 +142,14 @@ lemma IsPushout.isVanKampen_iff' {H : IsPushout f g h i} :
   · intro ⟨W', f', g', αW, pbf, pbg, H'⟩
     rwa [← VK f' g' h' i' αW αX αY αZ pbf pbg csh csi H'.toCommSq]
 
-lemma IsPushout.VanKampen_ext [HasPullbacks C] {H : IsPushout f g h i} (H' : H.IsVanKampen)
-    {X' Y' Z' : C} {h' : X' ⟶ Z'} {i' : Y' ⟶ Z'}
-    {αX : X' ⟶ X} {αY : Y' ⟶ Y} {αZ : Z' ⟶ Z}
-    (h₁ : IsPullback h' αX αZ h) (h₂ : IsPullback i' αY αZ i) (αZ' : Z' ⟶ Z)
-    (h'_eq : h' ≫ αZ = h' ≫ αZ') (i'_eq : i' ≫ αZ = i' ≫ αZ') : αZ = αZ' := by
+lemma IsPushout.VanKampen_isPullback_isPullback_hom_ext
+    {H : IsPushout f g h i} (H' : H.IsVanKampen)
+    {X' Y' Z' W : C} {h' : X' ⟶ Z'} {i' : Y' ⟶ Z'}
+    {αX : X' ⟶ X} [HasPullback αX f] {αY : Y' ⟶ Y} {αZ : Z' ⟶ Z} {f₁ f₂ : Z' ⟶ W}
+    (h₁ : IsPullback h' αX αZ h) (h₂ : IsPullback i' αY αZ i)
+    (h'_eq : h' ≫ f₁ = h' ≫ f₂) (i'_eq : i' ≫ f₁ = i' ≫ f₂) : f₁ = f₂ := by
   obtain ⟨W, f', g', αW, h₃, h₄, h₅⟩ :=
-    (isVanKampen_iff' H' h' i' αX αY αZ h₁.toCommSq h₂.toCommSq).1 ⟨h₁, h₂⟩
+    (isVanKampen'_ofIsVanKampen H' h' i' αX αY αZ h₁.toCommSq h₂.toCommSq).1 ⟨h₁, h₂⟩
   exact h₅.hom_ext h'_eq i'_eq
 
 theorem is_coprod_iff_isPushout {X E Y YE : C} (c : BinaryCofan X E) (hc : IsColimit c) {f : X ⟶ Y}
@@ -290,11 +291,8 @@ lemma Adhesive.isPullback_isPullback_hom_ext [Adhesive C] [Mono f] (H : IsPushou
     {αX : X' ⟶ X} {αY : Y' ⟶ Y} {αZ : Z' ⟶ Z}
     {f₁ f₂ : Z' ⟶ W}
     (h₁ : IsPullback h' αX αZ h) (h₂ : IsPullback i' αY αZ i)
-    (h'_eq : h' ≫ f₁ = h' ≫ f₂) (i'_eq : i' ≫ f₁ = i' ≫ f₂) : f₁ = f₂ := by
-  letI := hasPullback_symmetry f αX
-  obtain ⟨_, _, _, _, _, _, h₅⟩ := (IsPushout.isVanKampen_iff'
-    (Adhesive.van_kampen H) _ _ _ _ _ h₁.toCommSq h₂.toCommSq).1 ⟨h₁, h₂⟩
-  exact h₅.hom_ext h'_eq i'_eq
+    (h'_eq : h' ≫ f₁ = h' ≫ f₂) (i'_eq : i' ≫ f₁ = i' ≫ f₂) : f₁ = f₂ :=
+  IsPushout.VanKampen_isPullback_isPullback_hom_ext (Adhesive.van_kampen H) h₁ h₂ h'_eq i'_eq
 
 open Adhesive IsPullback IsPushout in
 instance [Adhesive C] {Z A B : C} {a : A ⟶ Z} {b : B ⟶ Z} [Mono a] [Mono b] :
@@ -323,7 +321,7 @@ instance [Adhesive C] {Z A B : C} {a : A ⟶ Z} {b : B ⟶ Z} [Mono a] [Mono b] 
     let g₂ := pullback.snd g v
 
     letI : HasPullback (pullback.snd f u) (pullback.fst a b) := hasPullback_symmetry _ _
-    obtain ⟨_, f', _, _, p₁, p₂, h₁⟩ := (isVanKampen_iff' (van_kampen (of_hasPushout _ _))
+    obtain ⟨_, f', _, _, p₁, p₂, h₁⟩ := (isVanKampen'_ofIsVanKampen (van_kampen (of_hasPushout _ _))
       _ _ _ _ _ f_sq_left.toCommSq f_sq_right.toCommSq).1 ⟨f_sq_left, f_sq_right⟩
     letI : Mono f' := by
       rw [← p₁.isoPullback_hom_fst]
