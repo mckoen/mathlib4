@@ -221,21 +221,6 @@ def associator_iso_left
     · exact (IsPushout.of_hasPushout _ _).ofWhiskerLeft.hom_ext (by simp) (by simp)
     · simp
 
-@[simps!]
-noncomputable
-def braiding_left_iso [BraidedCategory C] :
-    (ofHasPushout (curriedTensor C) f g).pt ≅
-      (ofHasPushout (curriedTensor C) g f).pt :=
-  pushoutSymmetry (f ▷ X) (A ◁ g) ≪≫
-    (HasColimit.isoOfNatIso (spanExt (β_ _ _) (β_ _ _) (β_ _ _)
-    (BraidedCategory.braiding_naturality_right A g).symm
-    (BraidedCategory.braiding_naturality_left f X).symm))
-
-@[simps!]
-noncomputable
-def braiding [BraidedCategory C] : (f □ g) ≅ (g □ (.mk f)) :=
-  Arrow.isoMk (braiding_left_iso f g) (β_ _ _) (by cat_disch)
-
 /-
 @[simps!]
 noncomputable
@@ -269,7 +254,7 @@ def associator
 
 @[simps!]
 noncomputable
-def leftUnitor [HasInitial C] [CartesianMonoidalCategory C] [MonoidalClosed C] [BraidedCategory C]
+def leftUnitor [HasInitial C] [MonoidalClosed C] [BraidedCategory C]
     (X : Arrow C) :
     (initial.to (𝟙_ C) □ X.hom) ≅ X := by
   refine Arrow.isoMk ?_ (λ_ X.right) ?_
@@ -287,7 +272,7 @@ def leftUnitor [HasInitial C] [CartesianMonoidalCategory C] [MonoidalClosed C] [
 
 @[simps!]
 noncomputable
-def rightUnitor [HasInitial C] [CartesianMonoidalCategory C] [MonoidalClosed C] [BraidedCategory C]
+def rightUnitor [HasInitial C] [MonoidalClosed C]
     (X : Arrow C) :
     (X □ initial.to (𝟙_ C)) ≅ X := by
   refine Arrow.isoMk ?_ (ρ_ X.right) ?_
@@ -445,8 +430,9 @@ lemma pentagon
 
 end PushoutProduct
 
+@[simps]
 noncomputable
-instance [HasPushouts C] [HasInitial C] [CartesianMonoidalCategory C]
+instance [HasInitial C]
     [MonoidalClosed C] [BraidedCategory C]
     [∀ S : C, PreservesColimitsOfSize (tensorLeft S)]
     [∀ S : C, PreservesColimitsOfSize (tensorRight S)] : MonoidalCategory (Arrow C) where
@@ -488,51 +474,79 @@ instance [HasPushouts C] [HasInitial C] [CartesianMonoidalCategory C]
     · exact MonoidalCategory.triangle X.right Y.right
 
 open MonoidalClosed in
+@[simps]
 noncomputable
-def blahblahblah [HasPullbacks C] [HasInitial C] [CartesianMonoidalCategory C]
-    [MonoidalClosed C] [BraidedCategory C]
-    [∀ S : C, PreservesColimitsOfSize (tensorLeft S)]
-    [∀ S : C, PreservesColimitsOfSize (tensorRight S)] (X : Arrow C) :
+def LeibnizAdjunction.unit [HasPullbacks C] [MonoidalClosed C] (X : Arrow C) :
+    𝟭 (Arrow C) ⟶ pushoutProduct.obj X ⋙
+      MonoidalClosed.internalHom.leibnizPullback.obj (op X) where
+  app _ := {
+    left := curry (pushout.inl _ _)
+    right := pullback.lift (curry (pushout.inr _ _)) (curry (𝟙 _))
+      (by simp [curry_pre_app, eq_curry_iff, uncurry_natural_right])
+    w := by
+      apply pullback.hom_ext
+      · simp [curry_pre_app, pushout.condition, curry_natural_left]
+      · simp [← curry_natural_right, curry_eq_iff, uncurry_natural_left] }
+  naturality _ _ _ := by
+    apply Arrow.hom_ext
+    · simp [← curry_natural_right, eq_curry_iff, uncurry_natural_left]
+    · apply pullback.hom_ext
+      all_goals simp [← curry_natural_right, eq_curry_iff, uncurry_natural_left]
+
+open MonoidalClosed in
+@[simps]
+noncomputable
+def LeibnizAdjunction.counit [HasPullbacks C] [MonoidalClosed C] (X : Arrow C) :
+    MonoidalClosed.internalHom.leibnizPullback.obj (op X) ⋙
+      pushoutProduct.obj X ⟶ 𝟭 (Arrow C) where
+  app _ := {
+    left := by
+      apply pushout.desc (uncurry (𝟙 _)) (uncurry (pullback.fst _ _))
+        (by simp [uncurry_eq, ← MonoidalCategory.whiskerLeft_comp_assoc])
+    right := uncurry (pullback.snd _ _)
+    w := by
+      apply pushout.hom_ext
+      · simp [uncurry_eq, ← MonoidalCategory.whiskerLeft_comp_assoc]
+      · simp [uncurry_eq, ← whisker_exchange_assoc, ← id_tensor_pre_app_comp_ev,
+        ← MonoidalCategory.whiskerLeft_comp_assoc, ← pullback.condition] }
+  naturality _ _ _ := by
+    apply Arrow.hom_ext
+    · apply pushout.hom_ext
+      · simp [uncurry_id_eq_ev]
+      · simp [uncurry_eq, ← MonoidalCategory.whiskerLeft_comp_assoc]
+    · simp [uncurry_eq, ← MonoidalCategory.whiskerLeft_comp_assoc]
+
+open MonoidalClosed in
+@[simps]
+noncomputable
+def LeibnizAdjunction.adj [HasPullbacks C] [MonoidalClosed C] (X : Arrow C) :
     (curriedTensor C).leibnizPushout.obj X ⊣
       MonoidalClosed.internalHom.leibnizPullback.obj (op X) where
-  unit := {
-    app _ := {
-      left := curry (pushout.inl _ _)
-      right := pullback.lift (curry (pushout.inr _ _)) (curry (𝟙 _))
-        (by simp [curry_pre_app, eq_curry_iff, uncurry_natural_right])
-      w := by
-        apply pullback.hom_ext
-        · simp [curry_pre_app, pushout.condition, curry_natural_left]
-        · simp [← curry_natural_right, curry_eq_iff, uncurry_natural_left] }
-    naturality _ _ _ := by
-      apply Arrow.hom_ext
-      · simp [← curry_natural_right, eq_curry_iff, uncurry_natural_left]
-      · apply pullback.hom_ext
-        all_goals simp [← curry_natural_right, eq_curry_iff, uncurry_natural_left] }
-  counit := {
-    app _ := {
-      left := by
-        apply pushout.desc (uncurry (𝟙 _)) (uncurry (pullback.fst _ _))
-          (by simp [uncurry_eq, ← MonoidalCategory.whiskerLeft_comp_assoc])
-      right := uncurry (pullback.snd _ _)
-      w := by
-        apply pushout.hom_ext
-        · simp [uncurry_eq, ← MonoidalCategory.whiskerLeft_comp_assoc]
-        · simp [uncurry_eq, ← whisker_exchange_assoc, ← id_tensor_pre_app_comp_ev,
-          ← MonoidalCategory.whiskerLeft_comp_assoc, ← pullback.condition] }
-    naturality _ _ _ := by
-      apply Arrow.hom_ext
-      · apply pushout.hom_ext
-        · simp [uncurry_id_eq_ev]
-        · simp [uncurry_eq, ← MonoidalCategory.whiskerLeft_comp_assoc]
-      · simp [uncurry_eq, ← MonoidalCategory.whiskerLeft_comp_assoc] }
+  unit := unit X
+  counit := counit X
   left_triangle_components _ := by
     apply Arrow.hom_ext
-    · simp
-      sorry
-    · simp
-      sorry
-  right_triangle_components := sorry
+    · apply pushout.hom_ext
+      all_goals simp [uncurry_eq, ← MonoidalCategory.whiskerLeft_comp_assoc]
+    · simp [uncurry_eq, ← MonoidalCategory.whiskerLeft_comp_assoc]
+  right_triangle_components _ := by
+    apply Arrow.hom_ext
+    · simp [← curry_natural_right]
+    · apply pullback.hom_ext
+      all_goals simp [← curry_natural_right]
+
+open MonoidalClosed in
+@[simps]
+noncomputable
+instance leibnizAdjunction₂ [HasPullbacks C] [MonoidalClosed C] :
+    ParametrizedAdjunction (curriedTensor C).leibnizPushout
+      MonoidalClosed.internalHom.leibnizPullback where
+  adj := LeibnizAdjunction.adj
+  unit_whiskerRight_map _ := by
+    ext
+    · simp [← curry_natural_right, curry_pre_app]
+    · apply pullback.hom_ext
+      all_goals simp [← curry_natural_right, curry_pre_app]
 
 noncomputable
 instance [HasPullbacks C] [HasInitial C] [CartesianMonoidalCategory C]
@@ -540,10 +554,159 @@ instance [HasPullbacks C] [HasInitial C] [CartesianMonoidalCategory C]
     [∀ S : C, PreservesColimitsOfSize (tensorLeft S)]
     [∀ S : C, PreservesColimitsOfSize (tensorRight S)] : MonoidalClosed (Arrow C) where
   closed X := {
-    rightAdj := (MonoidalClosed.internalHom).leibnizPullback.obj (.op X)
-    adj := by
-      change (curriedTensor C).leibnizPushout.obj X ⊣ _
-      sorry
-    }
+    rightAdj := MonoidalClosed.internalHom.leibnizPullback.obj (op X)
+    adj := LeibnizAdjunction.adj X }
+
+@[simps!]
+noncomputable
+def braiding_left_iso [BraidedCategory C] :
+    (ofHasPushout (curriedTensor C) f g).pt ≅
+      (ofHasPushout (curriedTensor C) g f).pt :=
+  pushoutSymmetry (f ▷ X) (A ◁ g) ≪≫
+    (HasColimit.isoOfNatIso (spanExt (β_ _ _) (β_ _ _) (β_ _ _)
+    (BraidedCategory.braiding_naturality_right A g).symm
+    (BraidedCategory.braiding_naturality_left f X).symm))
+
+@[simps!]
+noncomputable
+def braiding [BraidedCategory C] (X Y : Arrow C) : (X □ Y) ≅ (Y □ X) :=
+  Arrow.isoMk (braiding_left_iso X.hom Y.hom) (β_ _ _) (by cat_disch)
+
+lemma hexagon_forward [HasInitial C]
+    [MonoidalClosed C] [BraidedCategory C]
+    [∀ S : C, PreservesColimitsOfSize (tensorLeft S)]
+    [∀ S : C, PreservesColimitsOfSize (tensorRight S)] (X Y Z : Arrow C) :
+    (α_ X Y Z).hom ≫ (X.braiding (Y ⊗ Z)).hom ≫ (α_ Y Z X).hom =
+      (X.braiding Y).hom ▷ Z ≫ (α_ Y X Z).hom ≫ Y ◁ (X.braiding Z).hom := by
+  apply Arrow.hom_ext
+  · apply pushout.hom_ext
+    · simp only [tensorObj_def, pushoutProduct, leibnizPushout_obj_obj, id_obj, ofHasPushout_pt,
+        curriedTensor_obj_obj, curriedTensor_map_app, curriedTensor_obj_map, mk_right, mk_left,
+        mk_hom, associator_def, comp_left, PushoutProduct.associator_hom_left, braiding_hom_left,
+        Category.assoc, HasColimit.isoOfNatIso_hom_desc, colimit.ι_desc_assoc, span_left,
+        PushoutCocone.mk_pt, PushoutCocone.mk_ι_app, inl_comp_pushoutSymmetry_hom_assoc,
+        colimit.ι_desc, Cocones.precompose_obj_pt, Cocones.precompose_obj_ι, NatTrans.comp_app,
+        span_right, const_obj_obj, spanExt_hom_app_right,
+        BraidedCategory.braiding_naturality_right_assoc,
+        BraidedCategory.braiding_tensor_right_hom, IsPushout.inl_isoPushout_hom_assoc,
+        spanExt_hom_app_left, Iso.inv_hom_id_assoc, Iso.hom_inv_id_assoc, whiskerRight_def,
+        leibnizPushout_map_app, whiskerLeft_def, leibnizPushout_obj_map, mapArrowLeft_left,
+        ofHasPushout_ι, ofHasPushout_inl, ofHasPushout_inr, braiding_hom_right, map_comp,
+        mapArrowRight_left, MonoidalCategory.whiskerLeft_comp, IsPushout.inl_desc_assoc,
+        IsPushout.inl_desc]
+      rw [← MonoidalCategory.whiskerLeft_comp_assoc, ← MonoidalCategory.whiskerLeft_comp_assoc,
+        ← MonoidalCategory.whiskerLeft_comp_assoc]
+      simp only [MonoidalCategory.whiskerLeft_comp, Category.assoc, inl_comp_pushoutSymmetry_hom,
+        HasColimit.isoOfNatIso_ι_hom, span_right, spanExt_hom_app_right]
+    · apply (IsPushout.ofWhiskerRight (IsPushout.of_hasPushout _ _)).hom_ext
+      · simp only [id_obj, curriedTensor_obj_obj, tensorObj_def, pushoutProduct,
+          leibnizPushout_obj_obj, ofHasPushout_pt, curriedTensor_map_app, curriedTensor_obj_map,
+          mk_left, mk_right, mk_hom, associator_def, comp_left,
+          PushoutProduct.associator_hom_left, braiding_hom_left, Category.assoc,
+          HasColimit.isoOfNatIso_hom_desc, colimit.ι_desc_assoc, span_right, PushoutCocone.mk_pt,
+          PushoutCocone.mk_ι_app, IsPushout.inl_isoPushout_hom_assoc, span_left,
+          Cocones.precompose_obj_pt, Cocones.precompose_obj_ι, NatTrans.comp_app, const_obj_obj,
+          spanExt_hom_app_left, inl_comp_pushoutSymmetry_hom_assoc, colimit.ι_desc,
+          spanExt_hom_app_right, BraidedCategory.braiding_naturality_right_assoc,
+          BraidedCategory.braiding_tensor_right_hom, IsPushout.inr_isoPushout_hom_assoc,
+          Iso.inv_hom_id_assoc, Iso.hom_inv_id_assoc, whiskerRight_def, leibnizPushout_map_app,
+          whiskerLeft_def, leibnizPushout_obj_map, mapArrowLeft_left, ofHasPushout_ι,
+          ofHasPushout_inl, ofHasPushout_inr, braiding_hom_right, map_comp, mapArrowRight_left,
+          MonoidalCategory.whiskerLeft_comp, IsPushout.inr_desc_assoc, ← comp_whiskerRight_assoc]
+        cat_disch
+      · simp only [id_obj, curriedTensor_obj_obj, tensorObj_def, pushoutProduct,
+          leibnizPushout_obj_obj, ofHasPushout_pt, curriedTensor_map_app, curriedTensor_obj_map,
+          mk_left, mk_right, mk_hom, associator_def, comp_left,
+          PushoutProduct.associator_hom_left, braiding_hom_left, Category.assoc,
+          HasColimit.isoOfNatIso_hom_desc, colimit.ι_desc_assoc, span_right, PushoutCocone.mk_pt,
+          PushoutCocone.mk_ι_app, IsPushout.inr_isoPushout_hom_assoc, Cocones.precompose_obj_pt,
+          Cocones.precompose_obj_ι, NatTrans.comp_app, const_obj_obj, spanExt_hom_app_right,
+          inr_comp_pushoutSymmetry_hom_assoc, colimit.ι_desc, span_left, spanExt_hom_app_left,
+          BraidedCategory.braiding_tensor_right_hom, Iso.inv_hom_id_assoc, Iso.hom_inv_id_assoc,
+          whiskerRight_def, leibnizPushout_map_app, whiskerLeft_def, leibnizPushout_obj_map,
+          mapArrowLeft_left, ofHasPushout_ι, ofHasPushout_inl, ofHasPushout_inr,
+          braiding_hom_right, map_comp, mapArrowRight_left, MonoidalCategory.whiskerLeft_comp,
+          IsPushout.inr_desc_assoc, ← comp_whiskerRight_assoc]
+        simp only [HasColimit.isoOfNatIso_ι_hom, span_left, spanExt_hom_app_left,
+          comp_whiskerRight, Category.assoc, IsPushout.inl_isoPushout_hom_assoc,
+          colimit.ι_desc_assoc, Cocones.precompose_obj_pt, PushoutCocone.mk_pt,
+          Cocones.precompose_obj_ι, NatTrans.comp_app, const_obj_obj, PushoutCocone.mk_ι_app,
+          IsPushout.inl_desc, ← MonoidalCategory.whiskerLeft_comp_assoc]
+        cat_disch
+  · exact BraidedCategory.hexagon_forward X.right Y.right Z.right
+
+lemma hexagon_reverse [HasInitial C]
+    [MonoidalClosed C] [BraidedCategory C]
+    [∀ S : C, PreservesColimitsOfSize (tensorLeft S)]
+    [∀ S : C, PreservesColimitsOfSize (tensorRight S)] (X Y Z : Arrow C) :
+    (α_ X Y Z).inv ≫ ((X ⊗ Y).braiding Z).hom ≫ (α_ Z X Y).inv =
+      X ◁ (Y.braiding Z).hom ≫ (α_ X Z Y).inv ≫ (X.braiding Z).hom ▷ Y := by
+  apply Arrow.hom_ext
+  · apply pushout.hom_ext
+    · apply (IsPushout.ofWhiskerLeft (IsPushout.of_hasPushout _ _)).hom_ext
+      · simp only [id_obj, curriedTensor_obj_obj, tensorObj_def, pushoutProduct,
+          leibnizPushout_obj_obj, ofHasPushout_pt, curriedTensor_map_app, curriedTensor_obj_map,
+          mk_left, mk_right, mk_hom, associator_def, comp_left, PushoutProduct.associator_inv_left,
+          braiding_hom_left, Category.assoc, HasColimit.isoOfNatIso_hom_desc, colimit.ι_desc_assoc,
+          span_left, PushoutCocone.mk_pt, PushoutCocone.mk_ι_app, NatTrans.comp_app, const_obj_obj,
+          IsPushout.inl_isoPushout_hom_assoc, Cocones.precompose_obj_pt, Cocones.precompose_obj_ι,
+          spanExt_hom_app_left, Iso.symm_hom, inl_comp_pushoutSymmetry_hom_assoc, colimit.ι_desc,
+          span_right, spanExt_hom_app_right, BraidedCategory.braiding_tensor_left_hom,
+          Iso.hom_inv_id_assoc, Iso.inv_hom_id_assoc, whiskerLeft_def, leibnizPushout_obj_map,
+          whiskerRight_def, leibnizPushout_map_app, mapArrowRight_left, ofHasPushout_ι,
+          ofHasPushout_inl, ofHasPushout_inr, MonoidalCategory.whiskerLeft_comp, braiding_hom_right,
+          mapArrowLeft_left, map_comp, IsPushout.inl_desc_assoc]
+        rw [← MonoidalCategory.whiskerLeft_comp_assoc, ← MonoidalCategory.whiskerLeft_comp_assoc]
+        simp only [inl_comp_pushoutSymmetry_hom, HasColimit.isoOfNatIso_ι_hom, span_right,
+          spanExt_hom_app_right, MonoidalCategory.whiskerLeft_comp, Category.assoc,
+          IsPushout.inr_isoPushout_hom_assoc, colimit.ι_desc_assoc, Cocones.precompose_obj_pt,
+          PushoutCocone.mk_pt, Cocones.precompose_obj_ι, NatTrans.comp_app, const_obj_obj,
+          Iso.symm_hom, PushoutCocone.mk_ι_app, IsPushout.inr_desc, ← comp_whiskerRight_assoc]
+        cat_disch
+      · simp only [id_obj, curriedTensor_obj_obj, tensorObj_def, pushoutProduct,
+          leibnizPushout_obj_obj, ofHasPushout_pt, curriedTensor_map_app, curriedTensor_obj_map,
+          mk_left, mk_right, mk_hom, associator_def, comp_left, PushoutProduct.associator_inv_left,
+          braiding_hom_left, Category.assoc, HasColimit.isoOfNatIso_hom_desc, colimit.ι_desc_assoc,
+          span_left, PushoutCocone.mk_pt, PushoutCocone.mk_ι_app, IsPushout.inl_desc_assoc,
+          IsPushout.inr_isoPushout_hom_assoc, span_right, Cocones.precompose_obj_pt,
+          Cocones.precompose_obj_ι, NatTrans.comp_app, const_obj_obj, spanExt_hom_app_right,
+          Iso.symm_hom, inr_comp_pushoutSymmetry_hom_assoc, colimit.ι_desc, spanExt_hom_app_left,
+          BraidedCategory.braiding_naturality_left_assoc, BraidedCategory.braiding_tensor_left_hom,
+          IsPushout.inl_isoPushout_hom_assoc, Iso.hom_inv_id_assoc, Iso.inv_hom_id_assoc,
+          whiskerLeft_def, leibnizPushout_obj_map, whiskerRight_def, leibnizPushout_map_app,
+          mapArrowRight_left, ofHasPushout_ι, ofHasPushout_inl, ofHasPushout_inr,
+          MonoidalCategory.whiskerLeft_comp, braiding_hom_right, mapArrowLeft_left, map_comp]
+        rw [← MonoidalCategory.whiskerLeft_comp_assoc, ← MonoidalCategory.whiskerLeft_comp_assoc]
+        cat_disch
+    · simp only [id_obj, tensorObj_def, pushoutProduct, leibnizPushout_obj_obj, ofHasPushout_pt,
+        curriedTensor_obj_obj, curriedTensor_map_app, curriedTensor_obj_map, mk_right, mk_left,
+        mk_hom, associator_def, comp_left, PushoutProduct.associator_inv_left, braiding_hom_left,
+        Category.assoc, HasColimit.isoOfNatIso_hom_desc, colimit.ι_desc_assoc, span_right,
+        PushoutCocone.mk_pt, PushoutCocone.mk_ι_app, inr_comp_pushoutSymmetry_hom_assoc,
+        colimit.ι_desc, Cocones.precompose_obj_pt, Cocones.precompose_obj_ι, NatTrans.comp_app,
+        span_left, const_obj_obj, spanExt_hom_app_left,
+        BraidedCategory.braiding_naturality_left_assoc, BraidedCategory.braiding_tensor_left_hom,
+        IsPushout.inr_isoPushout_hom_assoc, spanExt_hom_app_right, Iso.symm_hom,
+        Iso.hom_inv_id_assoc, Iso.inv_hom_id_assoc, whiskerLeft_def, leibnizPushout_obj_map,
+        whiskerRight_def, leibnizPushout_map_app, mapArrowRight_left, ofHasPushout_ι,
+        ofHasPushout_inl, ofHasPushout_inr, MonoidalCategory.whiskerLeft_comp, braiding_hom_right,
+        mapArrowLeft_left, map_comp, IsPushout.inr_desc_assoc, IsPushout.inr_desc,
+        ← comp_whiskerRight_assoc]
+      cat_disch
+  · exact BraidedCategory.hexagon_reverse X.right Y.right Z.right
+
+@[simps]
+noncomputable
+instance [HasInitial C] [MonoidalClosed C] [BraidedCategory C]
+    [∀ S : C, PreservesColimitsOfSize (tensorLeft S)]
+    [∀ S : C, PreservesColimitsOfSize (tensorRight S)] : BraidedCategory (Arrow C) where
+  braiding := braiding
+  hexagon_forward := hexagon_forward
+  hexagon_reverse := hexagon_reverse
+
+noncomputable
+instance [HasInitial C] [MonoidalClosed C] [BraidedCategory C]
+    [∀ S : C, PreservesColimitsOfSize (tensorLeft S)]
+    [∀ S : C, PreservesColimitsOfSize (tensorRight S)] : SymmetricCategory (Arrow C) where
 
 end CategoryTheory.Arrow
