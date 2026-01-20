@@ -353,10 +353,10 @@ lemma associator_naturality
     {X₁ X₂ X₃ Y₁ Y₂ Y₃ : Arrow C} (f₁ : X₁ ⟶ Y₁) (f₂ : X₂ ⟶ Y₂) (f₃ : X₃ ⟶ Y₃) :
     ((pushoutProduct.map ((pushoutProduct.map f₁).app X₂ ≫
     (pushoutProduct.obj Y₁).map f₂)).app X₃ ≫
-    (pushoutProduct.obj ((pushoutProduct.obj Y₁).obj Y₂)).map f₃) ≫
+    (pushoutProduct.obj (Y₁ □ Y₂)).map f₃) ≫
     (associator Y₁ Y₂ Y₃).hom =
     (associator X₁ X₂ X₃).hom ≫
-    (pushoutProduct.map f₁).app ((pushoutProduct.obj X₂).obj X₃) ≫
+    (pushoutProduct.map f₁).app (X₂ □ X₃) ≫
     (pushoutProduct.obj Y₁).map ((pushoutProduct.map f₂).app X₃ ≫
     (pushoutProduct.obj Y₂).map f₃) := by
   apply Arrow.hom_ext
@@ -379,34 +379,29 @@ lemma pentagon_aux
     ((associator (W □ X) Y Z).hom ≫
     (associator W X (Y □ Z)).hom).left := by
   apply (IsPushout.ofWhiskerRight (IsPushout.of_hasPushout _ _)).hom_ext
-  · sorry
-    simp only [leibnizPushout_obj_obj, id_obj, ofHasPushout_pt, curriedTensor_obj_obj,
-    curriedTensor_map_app, curriedTensor_obj_map, mk_right, pushoutProduct, mk_left, mk_hom,
-    leibnizPushout_map_app, leibnizPushout_obj_map, comp_left, mapArrowLeft_left, ofHasPushout_ι,
-    tensor_whiskerLeft, ofHasPushout_inl, ofHasPushout_inr, associator_hom_right,
-    associator_hom_left, mapArrowRight_left, IsPushout.inr_desc_assoc, Category.assoc,
-    colimit.ι_desc_assoc, span_right, PushoutCocone.mk_pt, PushoutCocone.mk_ι_app,
-    whiskerRight_tensor, IsPushout.inl_isoPushout_hom_assoc, span_left, Cocones.precompose_obj_pt,
-    Cocones.precompose_obj_ι, NatTrans.comp_app, const_obj_obj, spanExt_hom_app_left,
-    colimit.ι_desc, Iso.inv_hom_id_assoc, ← comp_whiskerRight_assoc]
-    rw [← MonoidalCategory.whiskerLeft_comp_assoc, ← MonoidalCategory.whiskerLeft_comp_assoc]
-    simp only [Category.assoc, colimit.ι_desc, PushoutCocone.mk_pt, PushoutCocone.mk_ι_app,
-      IsPushout.inl_isoPushout_hom_assoc, Cocones.precompose_obj_pt, Cocones.precompose_obj_ι,
-      NatTrans.comp_app, span_left, const_obj_obj, spanExt_hom_app_left,
-      MonoidalCategory.whiskerLeft_comp, pentagon_assoc]
-  ·
-    apply (IsPushout.ofWhiskerRight
-      (IsPushout.ofWhiskerRight (IsPushout.of_hasPushout _ _))).hom_ext
-    · simp only [id_obj, curriedTensor_obj_obj, pushoutProduct, leibnizPushout_obj_obj, mk_left,
-      mk_right, mk_hom, ofHasPushout_pt, curriedTensor_map_app, curriedTensor_obj_map,
+  · simp only [leibnizPushout_obj_obj, id_obj, ofHasPushout_pt, curriedTensor_obj_obj,
+      curriedTensor_map_app, curriedTensor_obj_map, mk_right, pushoutProduct, mk_left, mk_hom,
       leibnizPushout_map_app, leibnizPushout_obj_map, comp_left, mapArrowLeft_left, ofHasPushout_ι,
       tensor_whiskerLeft, ofHasPushout_inl, ofHasPushout_inr, associator_hom_right,
       associator_hom_left, mapArrowRight_left, IsPushout.inr_desc_assoc, Category.assoc,
       colimit.ι_desc_assoc, span_right, PushoutCocone.mk_pt, PushoutCocone.mk_ι_app,
-      whiskerRight_tensor, IsPushout.inr_isoPushout_hom_assoc, Cocones.precompose_obj_pt,
-      Cocones.precompose_obj_ι, NatTrans.comp_app, const_obj_obj, spanExt_hom_app_right,
-      colimit.ι_desc]
-      rw [← comp_whiskerRight_assoc, ← comp_whiskerRight_assoc]
+      ← comp_whiskerRight_assoc, colimit.ι_desc, comp_whiskerRight, whisker_assoc,
+      IsPushout.inl_isoPushout_hom_assoc, span_left, Cocones.precompose_obj_pt,
+      Cocones.precompose_obj_ι, NatTrans.comp_app, const_obj_obj, spanExt_hom_app_left,
+      IsPushout.inl_desc, Iso.inv_hom_id_assoc, whiskerRight_tensor]
+    rw [← MonoidalCategory.whiskerLeft_comp_assoc, ← MonoidalCategory.whiskerLeft_comp_assoc]
+    simp
+  · apply (IsPushout.ofWhiskerRight
+      (IsPushout.ofWhiskerRight (IsPushout.of_hasPushout _ _))).hom_ext
+    · simp only [id_obj, curriedTensor_obj_obj, pushoutProduct, leibnizPushout_obj_obj, mk_left,
+        mk_right, mk_hom, ofHasPushout_pt, curriedTensor_map_app, curriedTensor_obj_map,
+        leibnizPushout_map_app, leibnizPushout_obj_map, comp_left, mapArrowLeft_left,
+        ofHasPushout_ι, tensor_whiskerLeft, ofHasPushout_inl, ofHasPushout_inr,
+        associator_hom_right, associator_hom_left, mapArrowRight_left, IsPushout.inr_desc_assoc,
+        Category.assoc, colimit.ι_desc_assoc, span_right, PushoutCocone.mk_pt,
+        PushoutCocone.mk_ι_app, whiskerRight_tensor, IsPushout.inr_isoPushout_hom_assoc,
+        Cocones.precompose_obj_pt, Cocones.precompose_obj_ι, NatTrans.comp_app, const_obj_obj,
+        spanExt_hom_app_right, colimit.ι_desc, ← comp_whiskerRight_assoc]
       simp only [Category.assoc, colimit.ι_desc, PushoutCocone.mk_pt, PushoutCocone.mk_ι_app,
         IsPushout.inl_isoPushout_hom_assoc, Cocones.precompose_obj_pt, Cocones.precompose_obj_ι,
         NatTrans.comp_app, span_left, const_obj_obj, spanExt_hom_app_left, comp_whiskerRight,
@@ -417,23 +412,17 @@ lemma pentagon_aux
         spanExt_hom_app_right, PushoutCocone.mk_ι_app, MonoidalCategory.whiskerLeft_comp,
         Category.assoc, pentagon_assoc, associator_naturality_left_assoc, whiskerRight_tensor,
         IsPushout.inl_isoPushout_hom_assoc, span_left, spanExt_hom_app_left]
-    · simp only [id_obj, curriedTensor_obj_obj, pushoutProduct, leibnizPushout_obj_obj, mk_left,
-      mk_right, mk_hom, ofHasPushout_pt, curriedTensor_map_app, curriedTensor_obj_map,
-      leibnizPushout_map_app, leibnizPushout_obj_map, comp_left, mapArrowLeft_left, ofHasPushout_ι,
-      tensor_whiskerLeft, ofHasPushout_inl, ofHasPushout_inr, associator_hom_right,
-      associator_hom_left, mapArrowRight_left, IsPushout.inr_desc_assoc, Category.assoc,
-      colimit.ι_desc_assoc, span_right, PushoutCocone.mk_pt, PushoutCocone.mk_ι_app,
-      whiskerRight_tensor, IsPushout.inr_isoPushout_hom_assoc, Cocones.precompose_obj_pt,
-      Cocones.precompose_obj_ι, NatTrans.comp_app, const_obj_obj, spanExt_hom_app_right,
-      colimit.ι_desc]
-      rw [← comp_whiskerRight_assoc, ← comp_whiskerRight_assoc]
-      simp only [Category.assoc, colimit.ι_desc, PushoutCocone.mk_pt, PushoutCocone.mk_ι_app,
-        IsPushout.inr_isoPushout_hom_assoc, Cocones.precompose_obj_pt, Cocones.precompose_obj_ι,
-        NatTrans.comp_app, span_right, const_obj_obj, spanExt_hom_app_right, comp_whiskerRight,
-        colimit.ι_desc_assoc, IsPushout.inr_desc, pentagon_assoc]
-      sorry
-/-
--/
+    · simp only [id_obj, curriedTensor_obj_obj, pushoutProduct, leibnizPushout_obj_obj,
+        ofHasPushout_pt, curriedTensor_map_app, curriedTensor_obj_map, mk_left, mk_right, mk_hom,
+        leibnizPushout_map_app, leibnizPushout_obj_map, comp_left, mapArrowLeft_left,
+        ofHasPushout_ι, tensor_whiskerLeft, ofHasPushout_inl, ofHasPushout_inr,
+        associator_hom_right, associator_hom_left, mapArrowRight_left, IsPushout.inr_desc_assoc,
+        Category.assoc, colimit.ι_desc_assoc, span_right, PushoutCocone.mk_pt,
+        PushoutCocone.mk_ι_app, whiskerRight_tensor, IsPushout.inr_isoPushout_hom_assoc,
+        Cocones.precompose_obj_pt, Cocones.precompose_obj_ι, NatTrans.comp_app, const_obj_obj,
+        spanExt_hom_app_right, colimit.ι_desc, ← comp_whiskerRight_assoc,
+        associator_naturality_left_assoc]
+      cat_disch
 
 lemma pentagon
     [∀ S : C, PreservesColimitsOfSize (tensorLeft S)]
@@ -447,14 +436,14 @@ lemma pentagon
   apply Arrow.hom_ext
   · apply pushout.hom_ext
     · simp only [leibnizPushout_obj_obj, id_obj, ofHasPushout_pt, curriedTensor_obj_obj,
-      curriedTensor_map_app, curriedTensor_obj_map, mk_left, mk_right, mk_hom, pushoutProduct,
-      leibnizPushout_map_app, leibnizPushout_obj_map, comp_left, mapArrowLeft_left, ofHasPushout_ι,
-      tensor_whiskerLeft, ofHasPushout_inl, ofHasPushout_inr, associator_hom_right,
-      associator_hom_left, mapArrowRight_left, IsPushout.inl_desc_assoc, Category.assoc,
-      colimit.ι_desc_assoc, span_left, PushoutCocone.mk_pt, PushoutCocone.mk_ι_app,
-      IsPushout.inl_desc, whiskerRight_tensor, colimit.ι_desc, Iso.inv_hom_id_assoc,
-      ← MonoidalCategory.whiskerLeft_comp_assoc]
-      simp
+        curriedTensor_map_app, curriedTensor_obj_map, mk_left, mk_right, mk_hom, pushoutProduct,
+        leibnizPushout_map_app, leibnizPushout_obj_map, comp_left, mapArrowLeft_left,
+        ofHasPushout_ι, tensor_whiskerLeft, ofHasPushout_inl, ofHasPushout_inr,
+        associator_hom_right, associator_hom_left, mapArrowRight_left, IsPushout.inl_desc_assoc,
+        Category.assoc, colimit.ι_desc_assoc, span_left, PushoutCocone.mk_pt,
+        PushoutCocone.mk_ι_app, IsPushout.inl_desc, ← MonoidalCategory.whiskerLeft_comp_assoc,
+        colimit.ι_desc, whiskerRight_tensor, Iso.inv_hom_id_assoc]
+      rw [MonoidalCategory.whiskerLeft_comp, Category.assoc, pentagon_assoc]
     · exact pentagon_aux ..
   · exact MonoidalCategory.pentagon W.right X.right Y.right Z.right
 
