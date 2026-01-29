@@ -58,15 +58,25 @@ def IsPushout.IsVanKampen (_ : IsPushout f g h i) : Prop :=
     (_ : IsPullback g' αW αY g) (_ : CommSq h' αX αZ h) (_ : CommSq i' αY αZ i)
     (_ : CommSq f' g' h' i'), IsPushout f' g' h' i' ↔ IsPullback h' αX αZ h ∧ IsPullback i' αY αZ i
 
-/-- An alternate formulation for a pushout being a van Kampen colimit.
-See `IsPushout.isVanKampen_iff'` below. -/
-@[nolint unusedArguments]
-def IsPushout.IsVanKampen' (_ : IsPushout f g h i) : Prop :=
-  ∀ ⦃X' Y' Z' : C⦄ (h' : X' ⟶ Z') (i' : Y' ⟶ Z') (αX : X' ⟶ X) (αY : Y' ⟶ Y) (αZ : Z' ⟶ Z)
-    (_ : CommSq h' αX αZ h) (_ : CommSq i' αY αZ i) [HasPullback αX f],
-    IsPullback h' αX αZ h ∧ IsPullback i' αY αZ i ↔
-      ∃ (W' : C) (f' : W' ⟶ X') (g' : W' ⟶ Y') (αW : W' ⟶ W),
-    IsPullback f' αW αX f ∧ IsPullback g' αW αY g ∧ IsPushout f' g' h' i'
+lemma IsPushout.IsVanKampen.exists_vanKampen_diagram {H : IsPushout f g h i} (H' : H.IsVanKampen) :
+    ∀ ⦃X' Y' Z' : C⦄ {h' : X' ⟶ Z'} {i' : Y' ⟶ Z'} {αX : X' ⟶ X} {αY : Y' ⟶ Y} {αZ : Z' ⟶ Z}
+    [HasPullback αX f] (_ : IsPullback h' αX αZ h) (_ : IsPullback i' αY αZ i),
+    ∃ (W' : C) (f' : W' ⟶ X') (g' : W' ⟶ Y') (αW : W' ⟶ W),
+      IsPullback f' αW αX f ∧ IsPullback g' αW αY g ∧ IsPushout f' g' h' i' := by
+  intro _ _ _ h' i' αX αY αZ _ hh hi
+  let l := hi.lift ((pullback.fst αX f) ≫ h') ((pullback.snd αX f) ≫ g)
+      (by simp only [Category.assoc, hh.toCommSq.w, pullback.condition_assoc, ← H.w])
+  use (pullback αX f), (pullback.fst αX f), l, (pullback.snd αX f)
+  refine ⟨IsPullback.of_hasPullback αX f, ?_, ?_⟩
+  · refine IsPullback.of_right' ?_ hi
+    rw [← H.w]
+    exact IsPullback.paste_horiz (IsPullback.of_hasPullback αX f) hh
+  · refine (H' (pullback.fst αX f) l  h' i' (pullback.snd αX f) αX αY αZ
+      (IsPullback.of_hasPullback αX f) ?_
+        hh.toCommSq hi.toCommSq ⟨by simp only [IsPullback.lift_fst, l]⟩).2 ⟨hh, hi⟩
+    · refine IsPullback.of_right' ?_ hi
+      rw [← H.w]
+      refine IsPullback.paste_horiz (IsPullback.of_hasPullback αX f) hh
 
 theorem IsPushout.IsVanKampen.flip {H : IsPushout f g h i} (H' : H.IsVanKampen) :
     H.flip.IsVanKampen := by
@@ -121,34 +131,27 @@ theorem IsPushout.isVanKampen_iff (H : IsPushout f g h i) :
     · exact ⟨fun h => h.2, fun h => ⟨w, h⟩⟩
 
 lemma IsPushout.isVanKampen_iff' {H : IsPushout f g h i} :
-    H.IsVanKampen ↔ H.IsVanKampen' := by
+    H.IsVanKampen ↔ ∀ ⦃X' Y' Z' : C⦄ (h' : X' ⟶ Z') (i' : Y' ⟶ Z')
+      (αX : X' ⟶ X) (αY : Y' ⟶ Y) (αZ : Z' ⟶ Z)
+      (_ : CommSq h' αX αZ h) (_ : CommSq i' αY αZ i) [HasPullback αX f],
+      IsPullback h' αX αZ h ∧ IsPullback i' αY αZ i ↔
+        ∃ (W' : C) (f' : W' ⟶ X') (g' : W' ⟶ Y') (αW : W' ⟶ W),
+      IsPullback f' αW αX f ∧ IsPullback g' αW αY g ∧ IsPushout f' g' h' i' := by
   constructor
-  · intro hvk X' Y' Z' h' i' αX αY αZ sq_h sq_i _
+  · intro H' X' Y' Z' h' i' αX αY αZ sq_h sq_i _
     constructor
     · intro ⟨hh, hi⟩
-      let l := hi.lift ((pullback.fst αX f) ≫ h') ((pullback.snd αX f) ≫ g)
-          (by simp only [Category.assoc, sq_h.w, pullback.condition_assoc, ← H.w])
-      use (pullback αX f), (pullback.fst αX f), l, (pullback.snd αX f)
-      refine ⟨IsPullback.of_hasPullback αX f, ?_, ?_⟩
-      · refine IsPullback.of_right' ?_ hi
-        rw [← H.w]
-        exact IsPullback.paste_horiz (IsPullback.of_hasPullback αX f) hh
-      · refine (hvk (pullback.fst αX f) l  h' i' (pullback.snd αX f) αX αY αZ
-          (IsPullback.of_hasPullback αX f) ?_
-            sq_h sq_i ⟨by simp only [IsPullback.lift_fst, l]⟩).2 ⟨hh, hi⟩
-        · refine IsPullback.of_right' ?_ hi
-          rw [← H.w]
-          refine IsPullback.paste_horiz (IsPullback.of_hasPullback αX f) hh
-    · intro ⟨W', f', g', αW, hf, hg, H'⟩
-      rwa [← hvk f' g' h' i' αW αX αY αZ hf hg sq_h sq_i H'.toCommSq]
-  · intro hvk W' X' Y' Z' f' g' h' i' αW αX αY αZ hf hg sq_h sq_i cs
+      exact H'.exists_vanKampen_diagram hh hi
+    · intro ⟨W', f', g', αW, hf, hg, H''⟩
+      rwa [← H' f' g' h' i' αW αX αY αZ hf hg sq_h sq_i H''.toCommSq]
+  · intro H' W' X' Y' Z' f' g' h' i' αW αX αY αZ hf hg sq_h sq_i cs
     letI : HasPullback αX f := hf.hasPullback
     constructor
-    · intro H'
-      rw [hvk h' i' αX αY αZ sq_h sq_i]
-      refine ⟨W', f', g', αW, hf, hg, H'⟩
+    · intro H''
+      rw [H' h' i' αX αY αZ sq_h sq_i]
+      refine ⟨W', f', g', αW, hf, hg, H''⟩
     · intro ⟨hh, hi⟩
-      obtain ⟨W'', f'', g'', αW', hf', hg', hP⟩ := (hvk h' i' αX αY αZ sq_h sq_i).1 ⟨hh, hi⟩
+      obtain ⟨W'', f'', g'', αW', hf', hg', hP⟩ := (H' h' i' αX αY αZ sq_h sq_i).1 ⟨hh, hi⟩
       refine hP.of_iso (IsPullback.isoIsPullback _ _ hf' hf)
         (Iso.refl _) (Iso.refl _) (Iso.refl _) (by simp) ?_ (by simp) (by simp)
       · apply hi.hom_ext
@@ -161,8 +164,7 @@ lemma IsPushout.isVanKampen_isPullback_isPullback_hom_ext
     {αX : X' ⟶ X} [HasPullback αX f] {αY : Y' ⟶ Y} {αZ : Z' ⟶ Z} {W : C} {f₁ f₂ : Z' ⟶ W}
     (hh : IsPullback h' αX αZ h) (hi : IsPullback i' αY αZ i)
     (h'_w : h' ≫ f₁ = h' ≫ f₂) (i'_w : i' ≫ f₁ = i' ≫ f₂) : f₁ = f₂ := by
-  rw [isVanKampen_iff'] at H'
-  obtain ⟨W', f', g', αW, _, _, H''⟩ := (H' h' i' αX αY αZ hh.toCommSq hi.toCommSq).1 ⟨hh, hi⟩
+  obtain ⟨W', f', g', αW, _, _, H''⟩ := H'.exists_vanKampen_diagram hh hi
   exact H''.hom_ext h'_w i'_w
 
 theorem is_coprod_iff_isPushout {X E Y YE : C} (c : BinaryCofan X E) (hc : IsColimit c) {f : X ⟶ Y}
@@ -318,9 +320,8 @@ instance Adhesive.desc_mono_of_mono [Adhesive C] {Z A B : C}
       rwa [pushout.inl_desc]
     letI : Mono (inr (fst a b) (snd a b) ≫ desc a b pullback.condition) := by
       rwa [pushout.inr_desc]
-    obtain ⟨_, f', _, _, p₁, p₂, h₁⟩ := (isVanKampen_iff'.1 (van_kampen (of_hasPushout ..))
-      _ _ _ _ _ (of_hasPullback ..).toCommSq (of_hasPullback ..).toCommSq).1
-        ⟨(of_hasPullback ..), (of_hasPullback f (inr ..))⟩
+    obtain ⟨_, f', _, _, p₁, p₂, h₁⟩ := (van_kampen (of_hasPushout ..)).exists_vanKampen_diagram
+      (of_hasPullback f (inl ..)) (of_hasPullback f (inr ..))
     letI : Mono f' := by
       rw [← p₁.isoPullback_hom_fst]
       infer_instance
