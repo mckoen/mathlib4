@@ -451,18 +451,16 @@ instance [Adhesive C] {X : C} (a b : Subobject X) : HasColimit (pair a b) where
   exists_colimit := ⟨{
     cocone := {
       pt := mk (desc a.arrow b.arrow pullback.condition)
-      ι := by refine {
-          app := by
-            rintro ⟨_ | _⟩
-            · exact (le_mk_of_comm (inl _ _) (inl_desc _ _ _)).hom
-            · exact (le_mk_of_comm (inr _ _) (inr_desc _ _ _)).hom }}
+      ι := {
+        app := by
+          rintro ⟨_ | _⟩
+          · exact (le_mk_of_comm (inl _ _) (inl_desc _ _ _)).hom
+          · exact (le_mk_of_comm (inr _ _) (inr_desc _ _ _)).hom }}
     isColimit := {
-      desc s := by
-        refine homOfLE <| mk_le_of_comm ?_ ?_
-        · refine desc (underlying.map (s.ι.app ⟨WalkingPair.left⟩))
-            (underlying.map (s.ι.app ⟨WalkingPair.right⟩))
-            (by ext; simp [pullback.condition])
-        · cat_disch }}⟩
+      desc s := (mk_le_of_comm
+        (desc (underlying.map (s.ι.app ⟨WalkingPair.left⟩))
+        (underlying.map (s.ι.app ⟨WalkingPair.right⟩))
+        (by ext; simp [pullback.condition])) (by cat_disch)).hom }}⟩
 
 instance [Adhesive C] {X : C} : HasBinaryCoproducts (Subobject X) := by
   apply hasBinaryCoproducts_of_hasColimit_pair
