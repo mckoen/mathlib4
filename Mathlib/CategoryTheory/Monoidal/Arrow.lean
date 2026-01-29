@@ -22,6 +22,8 @@ open Opposite Limits MonoidalCategory Functor PushoutObjObj
 
 variable {C : Type u} [Category.{v} C]
 
+attribute [simp] ofHasPushout_pt ofHasPushout_ι ofHasPushout_inl ofHasPushout_inr
+
 section IsPushout
 
 namespace IsPushout
