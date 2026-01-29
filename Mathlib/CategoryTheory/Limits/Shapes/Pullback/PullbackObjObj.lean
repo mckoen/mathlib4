@@ -78,12 +78,14 @@ structure PushoutObjObj where
 namespace PushoutObjObj
 
 /-- The `PushoutObjObj` structure given by the pushout of the colimits API. -/
-@[simps]
+@[simps -isSimp]
 noncomputable def ofHasPushout
     [HasPushout ((F.map f₁).app X₂) ((F.obj X₁).map f₂)] :
-    F.PushoutObjObj f₁ f₂ :=
-  { isPushout := IsPushout.of_hasPushout _ _, .. }
-
+    F.PushoutObjObj f₁ f₂ where
+  pt := pushout ((F.map f₁).app X₂) ((F.obj X₁).map f₂)
+  inl := pushout.inl _ _
+  inr := pushout.inr _ _
+  isPushout := IsPushout.of_hasPushout _ _
 variable {F f₁ f₂} (sq : F.PushoutObjObj f₁ f₂)
 
 /-- The "inclusion" `sq.pt ⟶ (F.obj Y₁).obj Y₂` when
@@ -117,12 +119,11 @@ lemma ι_flip : sq.flip.ι = sq.ι := by
   · rw [inl_ι, flip_inl, inr_ι, flip_obj_map]
   · rw [inr_ι, flip_inr, inl_ι, flip_map_app]
 
-@[simp]
 lemma ofHasPushout_ι [HasPushout ((F.map f₁).app X₂) ((F.obj X₁).map f₂)] :
     (ofHasPushout F f₁ f₂).ι =
       pushout.desc ((F.obj Y₁).map f₂) ((F.map f₁).app Y₂) (by simp) := by
   dsimp [PushoutObjObj.ι]
-  cat_disch
+  apply pushout.hom_ext <;> simp
 
 noncomputable section Arrow
 
