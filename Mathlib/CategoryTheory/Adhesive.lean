@@ -8,6 +8,7 @@ module
 public import Mathlib.CategoryTheory.Extensive
 public import Mathlib.CategoryTheory.Limits.Shapes.KernelPair
 public import Mathlib.CategoryTheory.Limits.Constructions.EpiMono
+public import Mathlib.CategoryTheory.Subobject.Basic
 
 /-!
 
@@ -444,5 +445,26 @@ theorem adhesive_of_reflective [HasPullbacks D] [Adhesive C] [HasPullbacks C] [H
   · exact (IsColimit.precomposeHomEquiv _ _).symm H.isColimit
 
 end functor
+
+open Subobject pushout in
+instance [Adhesive C] {X : C} (a b : Subobject X) : HasColimit (pair a b) where
+  exists_colimit := ⟨{
+    cocone := {
+      pt := mk (desc a.arrow b.arrow pullback.condition)
+      ι := by refine {
+          app := by
+            rintro ⟨_ | _⟩
+            · exact (le_mk_of_comm (inl _ _) (inl_desc _ _ _)).hom
+            · exact (le_mk_of_comm (inr _ _) (inr_desc _ _ _)).hom }}
+    isColimit := {
+      desc s := by
+        refine homOfLE <| mk_le_of_comm ?_ ?_
+        · refine desc (underlying.map (s.ι.app ⟨WalkingPair.left⟩))
+            (underlying.map (s.ι.app ⟨WalkingPair.right⟩))
+            (by ext; simp [pullback.condition])
+        · cat_disch }}⟩
+
+instance [Adhesive C] {X : C} : HasBinaryCoproducts (Subobject X) := by
+  apply hasBinaryCoproducts_of_hasColimit_pair
 
 end CategoryTheory
