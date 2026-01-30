@@ -153,7 +153,7 @@ lemma mapArrowLeft_id :
 @[reassoc (attr := simp)]
 lemma mapArrowLeft_comp {f₁'' : Arrow C₁} (sq₁₂'' : F.PushoutObjObj f₁''.hom f₂.hom)
     (sq : f₁ ⟶ f₁') (sq' : f₁' ⟶ f₁'') :
-    (mapArrowLeft sq₁₂ sq₁₂' sq) ≫ (mapArrowLeft sq₁₂' sq₁₂'' sq') =
+    mapArrowLeft sq₁₂ sq₁₂' sq ≫ mapArrowLeft sq₁₂' sq₁₂'' sq' =
       mapArrowLeft sq₁₂ sq₁₂'' (sq ≫ sq') := by cat_disch
 
 /-- Given a `PushoutObjObj` of `f₁ : Arrow C₁` and `f₂ : Arrow C₂`, a `PushoutObjObj` of `f₁'` and
@@ -192,7 +192,7 @@ lemma mapArrowRight_id :
 @[reassoc (attr := simp)]
 lemma mapArrowRight_comp {f₂'' : Arrow C₂} (sq₁₂'' : F.PushoutObjObj f₁.hom f₂''.hom)
     (sq : f₂ ⟶ f₂') (sq' : f₂' ⟶ f₂'') :
-    (mapArrowRight sq₁₂ sq₁₂' sq) ≫ (mapArrowRight sq₁₂' sq₁₂'' sq') =
+    mapArrowRight sq₁₂ sq₁₂' sq ≫ mapArrowRight sq₁₂' sq₁₂'' sq' =
       mapArrowRight sq₁₂ sq₁₂'' (sq ≫ sq') := by cat_disch
 
 /-- Given a `PushoutObjObj` of `f₁ : Arrow C₁` and `f₂ : Arrow C₂`, a `PushoutObjObj` of `f₁` and
@@ -319,7 +319,7 @@ lemma mapArrowLeft_id :
 @[simp]
 lemma mapArrowLeft_comp {f₁'' : Arrow C₁} (sq₁₃'' : G.PullbackObjObj f₁''.hom f₃.hom)
     (sq' : f₁'' ⟶ f₁') (sq : f₁' ⟶ f₁) :
-    (mapArrowLeft sq₁₃ sq₁₃' sq) ≫ (mapArrowLeft sq₁₃' sq₁₃'' sq') =
+    mapArrowLeft sq₁₃ sq₁₃' sq ≫ mapArrowLeft sq₁₃' sq₁₃'' sq' =
       mapArrowLeft sq₁₃ sq₁₃'' (sq' ≫ sq) := by cat_disch
 
 /-- Given a `PullbackObjObj` of `f₁ : Arrow C₁` and `f₃ : Arrow C₃`, a `PullbackObjObj` of `f₁'` and
@@ -357,7 +357,7 @@ lemma mapArrowRight_id :
 @[simp]
 lemma mapArrowRight_comp {f₃'' : Arrow C₃} (sq₁₃'' : G.PullbackObjObj f₁.hom f₃''.hom)
     (sq : f₃ ⟶ f₃') (sq' : f₃' ⟶ f₃'') :
-    (mapArrowRight sq₁₃ sq₁₃' sq) ≫ (mapArrowRight sq₁₃' sq₁₃'' sq') =
+    mapArrowRight sq₁₃ sq₁₃' sq ≫ mapArrowRight sq₁₃' sq₁₃'' sq' =
       mapArrowRight sq₁₃ sq₁₃'' (sq ≫ sq') := by cat_disch
 
 /-- Given a `PullbackObjObj` of `f₁ : Arrow C₁` and `f₃ : Arrow C₃`, a `PullbackObjObj` of `f₁` and
