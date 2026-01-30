@@ -86,6 +86,7 @@ noncomputable def ofHasPushout
   inl := pushout.inl _ _
   inr := pushout.inr _ _
   isPushout := IsPushout.of_hasPushout _ _
+
 variable {F f₁ f₂} (sq : F.PushoutObjObj f₁ f₂)
 
 /-- The "inclusion" `sq.pt ⟶ (F.obj Y₁).obj Y₂` when
@@ -122,8 +123,7 @@ lemma ι_flip : sq.flip.ι = sq.ι := by
 lemma ofHasPushout_ι [HasPushout ((F.map f₁).app X₂) ((F.obj X₁).map f₂)] :
     (ofHasPushout F f₁ f₂).ι =
       pushout.desc ((F.obj Y₁).map f₂) ((F.map f₁).app Y₂) (by simp) := by
-  dsimp [PushoutObjObj.ι]
-  apply pushout.hom_ext <;> simp
+  ext <;> simp [PushoutObjObj.ι, ofHasPushout_inl, ofHasPushout_inr]
 
 noncomputable section Arrow
 
@@ -257,11 +257,14 @@ structure PullbackObjObj where
 namespace PullbackObjObj
 
 /-- The `PullbackObjObj` structure given by the pullback of the limits API. -/
-@[simps]
+@[simps -isSimp]
 noncomputable def ofHasPullback
     [HasPullback ((G.obj (op X₁)).map f₃) ((G.map f₁.op).app Y₃)] :
-    G.PullbackObjObj f₁ f₃ :=
-  { isPullback := IsPullback.of_hasPullback _ _, ..}
+    G.PullbackObjObj f₁ f₃ where
+  pt := pullback ((G.obj (op X₁)).map f₃) ((G.map f₁.op).app Y₃)
+  fst := pullback.fst _ _
+  snd := pullback.snd _ _
+  isPullback := IsPullback.of_hasPullback _ _
 
 variable {G f₁ f₃} (sq : G.PullbackObjObj f₁ f₃)
 
@@ -281,13 +284,11 @@ lemma hom_ext {X₂ : C₂} {f g : X₂ ⟶ sq.pt} (h₁ : f ≫ sq.fst = g ≫ 
     (h₂ : f ≫ sq.snd = g ≫ sq.snd) : f = g :=
   sq.isPullback.hom_ext h₁ h₂
 
-@[simp]
 lemma ofHasPullback_π
     [HasPullback ((G.obj (op X₁)).map f₃) ((G.map f₁.op).app Y₃)] :
     (ofHasPullback G f₁ f₃).π =
       pullback.lift ((G.map f₁.op).app X₃) ((G.obj (op Y₁)).map f₃) (by simp) := by
-  dsimp [PullbackObjObj.π]
-  cat_disch
+  ext <;> simp [PullbackObjObj.π, ofHasPullback_fst, ofHasPullback_snd]
 
 noncomputable section Arrow
 
