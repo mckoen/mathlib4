@@ -316,7 +316,7 @@ def mapArrowLeft (sq : f₁' ⟶ f₁) :
 lemma mapArrowLeft_id :
     mapArrowLeft sq₁₃ sq₁₃ (𝟙 _) = 𝟙 _ := by cat_disch
 
-@[simp]
+@[reassoc (attr := simp)]
 lemma mapArrowLeft_comp {f₁'' : Arrow C₁} (sq₁₃'' : G.PullbackObjObj f₁''.hom f₃.hom)
     (sq' : f₁'' ⟶ f₁') (sq : f₁' ⟶ f₁) :
     mapArrowLeft sq₁₃ sq₁₃' sq ≫ mapArrowLeft sq₁₃' sq₁₃'' sq' =
@@ -354,7 +354,7 @@ def mapArrowRight (sq : f₃ ⟶ f₃') :
 lemma mapArrowRight_id :
     mapArrowRight sq₁₃ sq₁₃ (𝟙 _) = 𝟙 _ := by cat_disch
 
-@[simp]
+@[reassoc (attr := simp)]
 lemma mapArrowRight_comp {f₃'' : Arrow C₃} (sq₁₃'' : G.PullbackObjObj f₁.hom f₃''.hom)
     (sq : f₃ ⟶ f₃') (sq' : f₃' ⟶ f₃'') :
     mapArrowRight sq₁₃ sq₁₃' sq ≫ mapArrowRight sq₁₃' sq₁₃'' sq' =
