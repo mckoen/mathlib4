@@ -5,7 +5,7 @@ Authors: Joël Riou, Jack McKoen
 -/
 module
 
-public import Mathlib.CategoryTheory.Limits.Shapes.Pullback.CommSq
+public import Mathlib.CategoryTheory.Limits.Shapes.Pullback.IsPullback.Defs
 
 /-!
 # Leibniz Constructions
@@ -123,8 +123,7 @@ lemma ι_flip : sq.flip.ι = sq.ι := by
 lemma ofHasPushout_ι [HasPushout ((F.map f₁).app X₂) ((F.obj X₁).map f₂)] :
     (ofHasPushout F f₁ f₂).ι =
       pushout.desc ((F.obj Y₁).map f₂) ((F.map f₁).app Y₂) (by simp) := by
-  dsimp [PushoutObjObj.ι]
-  apply pushout.hom_ext <;> simp
+  ext <;> simp [PushoutObjObj.ι, ofHasPushout_inl, ofHasPushout_inr]
 
 noncomputable section Arrow
 
@@ -154,7 +153,7 @@ lemma mapArrowLeft_id :
 @[reassoc (attr := simp)]
 lemma mapArrowLeft_comp {f₁'' : Arrow C₁} (sq₁₂'' : F.PushoutObjObj f₁''.hom f₂.hom)
     (sq : f₁ ⟶ f₁') (sq' : f₁' ⟶ f₁'') :
-    (mapArrowLeft sq₁₂ sq₁₂' sq) ≫ (mapArrowLeft sq₁₂' sq₁₂'' sq') =
+    mapArrowLeft sq₁₂ sq₁₂' sq ≫ mapArrowLeft sq₁₂' sq₁₂'' sq' =
       mapArrowLeft sq₁₂ sq₁₂'' (sq ≫ sq') := by cat_disch
 
 /-- Given a `PushoutObjObj` of `f₁ : Arrow C₁` and `f₂ : Arrow C₂`, a `PushoutObjObj` of `f₁'` and
@@ -193,7 +192,7 @@ lemma mapArrowRight_id :
 @[reassoc (attr := simp)]
 lemma mapArrowRight_comp {f₂'' : Arrow C₂} (sq₁₂'' : F.PushoutObjObj f₁.hom f₂''.hom)
     (sq : f₂ ⟶ f₂') (sq' : f₂' ⟶ f₂'') :
-    (mapArrowRight sq₁₂ sq₁₂' sq) ≫ (mapArrowRight sq₁₂' sq₁₂'' sq') =
+    mapArrowRight sq₁₂ sq₁₂' sq ≫ mapArrowRight sq₁₂' sq₁₂'' sq' =
       mapArrowRight sq₁₂ sq₁₂'' (sq ≫ sq') := by cat_disch
 
 /-- Given a `PushoutObjObj` of `f₁ : Arrow C₁` and `f₂ : Arrow C₂`, a `PushoutObjObj` of `f₁` and
@@ -258,11 +257,14 @@ structure PullbackObjObj where
 namespace PullbackObjObj
 
 /-- The `PullbackObjObj` structure given by the pullback of the limits API. -/
-@[simps]
+@[simps -isSimp]
 noncomputable def ofHasPullback
     [HasPullback ((G.obj (op X₁)).map f₃) ((G.map f₁.op).app Y₃)] :
-    G.PullbackObjObj f₁ f₃ :=
-  { isPullback := IsPullback.of_hasPullback _ _, ..}
+    G.PullbackObjObj f₁ f₃ where
+  pt := pullback ((G.obj (op X₁)).map f₃) ((G.map f₁.op).app Y₃)
+  fst := pullback.fst _ _
+  snd := pullback.snd _ _
+  isPullback := IsPullback.of_hasPullback _ _
 
 variable {G f₁ f₃} (sq : G.PullbackObjObj f₁ f₃)
 
@@ -282,13 +284,11 @@ lemma hom_ext {X₂ : C₂} {f g : X₂ ⟶ sq.pt} (h₁ : f ≫ sq.fst = g ≫ 
     (h₂ : f ≫ sq.snd = g ≫ sq.snd) : f = g :=
   sq.isPullback.hom_ext h₁ h₂
 
-@[simp]
 lemma ofHasPullback_π
     [HasPullback ((G.obj (op X₁)).map f₃) ((G.map f₁.op).app Y₃)] :
     (ofHasPullback G f₁ f₃).π =
       pullback.lift ((G.map f₁.op).app X₃) ((G.obj (op Y₁)).map f₃) (by simp) := by
-  dsimp [PullbackObjObj.π]
-  cat_disch
+  ext <;> simp [PullbackObjObj.π, ofHasPullback_fst, ofHasPullback_snd]
 
 noncomputable section Arrow
 
@@ -316,10 +316,10 @@ def mapArrowLeft (sq : f₁' ⟶ f₁) :
 lemma mapArrowLeft_id :
     mapArrowLeft sq₁₃ sq₁₃ (𝟙 _) = 𝟙 _ := by cat_disch
 
-@[simp]
+@[reassoc (attr := simp)]
 lemma mapArrowLeft_comp {f₁'' : Arrow C₁} (sq₁₃'' : G.PullbackObjObj f₁''.hom f₃.hom)
     (sq' : f₁'' ⟶ f₁') (sq : f₁' ⟶ f₁) :
-    (mapArrowLeft sq₁₃ sq₁₃' sq) ≫ (mapArrowLeft sq₁₃' sq₁₃'' sq') =
+    mapArrowLeft sq₁₃ sq₁₃' sq ≫ mapArrowLeft sq₁₃' sq₁₃'' sq' =
       mapArrowLeft sq₁₃ sq₁₃'' (sq' ≫ sq) := by cat_disch
 
 /-- Given a `PullbackObjObj` of `f₁ : Arrow C₁` and `f₃ : Arrow C₃`, a `PullbackObjObj` of `f₁'` and
@@ -354,10 +354,10 @@ def mapArrowRight (sq : f₃ ⟶ f₃') :
 lemma mapArrowRight_id :
     mapArrowRight sq₁₃ sq₁₃ (𝟙 _) = 𝟙 _ := by cat_disch
 
-@[simp]
+@[reassoc (attr := simp)]
 lemma mapArrowRight_comp {f₃'' : Arrow C₃} (sq₁₃'' : G.PullbackObjObj f₁.hom f₃''.hom)
     (sq : f₃ ⟶ f₃') (sq' : f₃' ⟶ f₃'') :
-    (mapArrowRight sq₁₃ sq₁₃' sq) ≫ (mapArrowRight sq₁₃' sq₁₃'' sq') =
+    mapArrowRight sq₁₃ sq₁₃' sq ≫ mapArrowRight sq₁₃' sq₁₃'' sq' =
       mapArrowRight sq₁₃ sq₁₃'' (sq ≫ sq') := by cat_disch
 
 /-- Given a `PullbackObjObj` of `f₁ : Arrow C₁` and `f₃ : Arrow C₃`, a `PullbackObjObj` of `f₁` and
