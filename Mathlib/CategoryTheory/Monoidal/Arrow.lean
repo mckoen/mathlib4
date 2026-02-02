@@ -8,6 +8,7 @@ module
 public import Mathlib.CategoryTheory.Limits.Shapes.Pullback.PullbackObjObj
 public import Mathlib.CategoryTheory.Monoidal.Cartesian.Basic
 public import Mathlib.CategoryTheory.Monoidal.Closed.Cartesian
+public import Mathlib.CategoryTheory.Limits.Shapes.Pullback.IsPullback.Basic
 
 /-!
 # Monoidal structure on the arrow category
@@ -22,7 +23,7 @@ open Opposite Limits MonoidalCategory Functor PushoutObjObj
 
 variable {C : Type u} [Category.{v} C]
 
-attribute [simp] ofHasPushout_pt ofHasPushout_ι ofHasPushout_inl ofHasPushout_inr
+attribute [simp] PushoutObjObj.ι ofHasPushout_pt ofHasPushout_inl ofHasPushout_inr
 
 section IsPushout
 
@@ -461,8 +462,12 @@ end CartesianMonoidal
 
 section MonoidalClosed
 
+open PullbackObjObj
+
 variable [HasPushouts C] [HasPullbacks C] [MonoidalCategory C] [MonoidalClosed C]
   {A B X Y Z W : C} (f : A ⟶ B) (g : X ⟶ Y) (h : Z ⟶ W)
+
+attribute [simp] PullbackObjObj.π ofHasPullback_pt ofHasPullback_fst ofHasPullback_snd
 
 open MonoidalClosed
 
