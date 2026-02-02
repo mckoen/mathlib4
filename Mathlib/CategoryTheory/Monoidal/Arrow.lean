@@ -23,7 +23,7 @@ open Opposite Limits MonoidalCategory Functor PushoutObjObj
 
 variable {C : Type u} [Category.{v} C]
 
-attribute [simp] PushoutObjObj.ι ofHasPushout_pt ofHasPushout_inl ofHasPushout_inr
+attribute [local simp] PushoutObjObj.ι ofHasPushout_pt ofHasPushout_inl ofHasPushout_inr
 
 section IsPushout
 
@@ -446,7 +446,7 @@ open PullbackObjObj
 variable [HasPushouts C] [HasPullbacks C] [MonoidalCategory C] [MonoidalClosed C]
   {A B X Y Z W : C} (f : A ⟶ B) (g : X ⟶ Y) (h : Z ⟶ W)
 
-attribute [simp] PullbackObjObj.π ofHasPullback_pt ofHasPullback_fst ofHasPullback_snd
+attribute [local simp] PullbackObjObj.π ofHasPullback_pt ofHasPullback_fst ofHasPullback_snd
 
 open MonoidalClosed
 
