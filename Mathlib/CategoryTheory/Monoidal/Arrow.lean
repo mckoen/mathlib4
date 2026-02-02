@@ -6,9 +6,9 @@ Authors: Jack McKoen
 module
 
 public import Mathlib.CategoryTheory.Limits.Shapes.Pullback.PullbackObjObj
+public import Mathlib.CategoryTheory.Limits.Shapes.Pullback.IsPullback.Basic
 public import Mathlib.CategoryTheory.Monoidal.Cartesian.Basic
 public import Mathlib.CategoryTheory.Monoidal.Closed.Cartesian
-public import Mathlib.CategoryTheory.Limits.Shapes.Pullback.IsPullback.Basic
 
 /-!
 # Monoidal structure on the arrow category
@@ -36,22 +36,22 @@ variable [MonoidalCategory C] {Z X Y P W : C} {f : Z ⟶ X} {g : Z ⟶ Y}
 @[reassoc (attr := simp)]
 lemma whiskerLeft_inl_desc {Q : C} :
     Q ◁ inl ≫ Q ◁ hP.desc h k w = Q ◁ h := by
-  simp [← MonoidalCategory.whiskerLeft_comp]
+  rw [← MonoidalCategory.whiskerLeft_comp, inl_desc]
 
 @[reassoc (attr := simp)]
 lemma whiskerLeft_inr_desc {Q : C} :
     Q ◁ inr ≫ Q ◁ hP.desc h k w = Q ◁ k := by
-  simp [← MonoidalCategory.whiskerLeft_comp]
+  rw [← MonoidalCategory.whiskerLeft_comp, inr_desc]
 
 @[reassoc (attr := simp)]
 lemma inl_desc_whiskerRight {Q : C} :
     inl ▷ Q ≫ hP.desc h k w ▷ Q = h ▷ Q := by
-  simp [← comp_whiskerRight]
+  rw [← comp_whiskerRight, inl_desc]
 
 @[reassoc (attr := simp)]
 lemma inr_desc_whiskerRight {Q : C} :
     inr ▷ Q ≫ hP.desc h k w ▷ Q = k ▷ Q := by
-  simp [← comp_whiskerRight]
+  rw [← comp_whiskerRight, inr_desc]
 
 @[reassoc]
 lemma whiskerLeft_w (hP : IsPushout f g inl inr) {Q : C} :
@@ -73,26 +73,6 @@ variable [HasPushouts C] [MonoidalCategory C]
   {W X Y Z : C} {f : X ⟶ Y} {g : X ⟶ Z}
   (h : Y ⟶ W) (k : Z ⟶ W) (w : f ≫ h = g ≫ k) {Q : C}
 
-@[reassoc (attr := simp)]
-lemma Limits.pushout.whiskerLeft_inl_desc :
-    Q ◁ inl f g ≫ Q ◁ desc h k w = Q ◁ h := by
-  simp [← MonoidalCategory.whiskerLeft_comp]
-
-@[reassoc (attr := simp)]
-lemma Limits.pushout.whiskerLeft_inr_desc :
-    Q ◁ inr f g ≫ Q ◁ desc h k w = Q ◁ k := by
-  simp [← MonoidalCategory.whiskerLeft_comp]
-
-@[reassoc (attr := simp)]
-lemma Limits.pushout.inl_desc_whiskerRight :
-    inl f g ▷ Q ≫ desc h k w ▷ Q = h ▷ Q := by
-  simp [← comp_whiskerRight]
-
-@[reassoc (attr := simp)]
-lemma Limits.pushout.inr_desc_whiskerRight :
-    inr f g ▷ Q ≫ desc h k w ▷ Q = k ▷ Q := by
-  simp [← comp_whiskerRight]
-
 @[reassoc]
 lemma Limits.pushout.whiskerLeft_condition :
     Q ◁ f ≫ Q ◁ inl f g = Q ◁ g ≫ Q ◁ inr f g := by
@@ -105,7 +85,6 @@ lemma Limits.pushout.condition_whiskerRight :
 
 variable {A B X Y Z W : C} {f : A ⟶ B} {g : X ⟶ Y}
 
---change
 @[reassoc]
 lemma Limits.pushout.associator_naturality_left_condition {h : Z ⊗ W ⟶ X} :
     f ▷ Z ▷ W ≫ (α_ B Z W).hom ≫ B ◁ h ≫ inl (f ▷ X) (A ◁ g) =
@@ -113,7 +92,6 @@ lemma Limits.pushout.associator_naturality_left_condition {h : Z ⊗ W ⟶ X} :
   rw [associator_naturality_left_assoc, ← whisker_exchange_assoc, pushout.condition,
     ← MonoidalCategory.whiskerLeft_comp_assoc]
 
---change
 @[reassoc]
 lemma Limits.pushout.associator_inv_naturality_right_condition {h : Z ⊗ W ⟶ A} :
     Z ◁ W ◁ g ≫ (α_ Z W Y).inv ≫ h ▷ Y ≫ inr (f ▷ X) (A ◁ g) =
@@ -127,7 +105,8 @@ end Pushout
 noncomputable
 abbrev pushoutProduct [HasPushouts C] [MonoidalCategory C] := (curriedTensor C).leibnizPushout
 
-notation3 X₁ " □ " X₂:10 => ((curriedTensor _).leibnizPushout.obj X₁).obj X₂
+/-- Notation for the pushout-product of morphisms. -/
+notation3 f " □ " g:10 => (pushoutProduct.obj f).obj g
 
 namespace Arrow
 
@@ -529,7 +508,7 @@ def LeibnizAdjunction.adj (X : Arrow C) :
 
 @[simps]
 noncomputable
-instance leibnizAdjunction₂ :
+def leibnizAdjunction₂ :
     ParametrizedAdjunction (curriedTensor C).leibnizPushout
       MonoidalClosed.internalHom.leibnizPullback where
   adj := LeibnizAdjunction.adj
