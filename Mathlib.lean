@@ -2278,6 +2278,8 @@ public import Mathlib.CategoryTheory.Action.Continuous
 public import Mathlib.CategoryTheory.Action.Limits
 public import Mathlib.CategoryTheory.Action.Monoidal
 public import Mathlib.CategoryTheory.Adhesive
+public import Mathlib.CategoryTheory.Adhesive.Basic
+public import Mathlib.CategoryTheory.Adhesive.Subobject
 public import Mathlib.CategoryTheory.Adjunction.Additive
 public import Mathlib.CategoryTheory.Adjunction.AdjointFunctorTheorems
 public import Mathlib.CategoryTheory.Adjunction.Basic
