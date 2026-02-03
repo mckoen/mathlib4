@@ -7,6 +7,7 @@ module
 
 public import Mathlib.CategoryTheory.Adhesive.Basic
 public import Mathlib.CategoryTheory.Subobject.Basic
+public import Mathlib.CategoryTheory.Subobject.Lattice
 
 /-!
 
@@ -19,30 +20,30 @@ public import Mathlib.CategoryTheory.Subobject.Basic
 
 @[expose] public section
 
-namespace CategoryTheory
+namespace CategoryTheory.Adhesive
 
 open Limits Subobject
 
 universe v u
 
-variable {C : Type u} [Category.{v} C]
+variable {C : Type u} [Category.{v} C] [Adhesive C] {X : C}
 
-instance [Adhesive C] {X : C} (a b : Subobject X) : HasColimit (pair a b) where
-  exists_colimit := ⟨{
-    cocone := {
-      pt := mk (pushout.desc a.arrow b.arrow pullback.condition)
-      ι := {
-        app := by
-          rintro ⟨_ | _⟩
-          · exact (le_mk_of_comm (pushout.inl _ _) (pushout.inl_desc _ _ _)).hom
-          · exact (le_mk_of_comm (pushout.inr _ _) (pushout.inr_desc _ _ _)).hom }}
-    isColimit := {
-      desc s := (mk_le_of_comm
-        (pushout.desc (underlying.map (s.ι.app ⟨WalkingPair.left⟩))
-        (underlying.map (s.ι.app ⟨WalkingPair.right⟩))
-        (by ext; simp [pullback.condition])) (by cat_disch)).hom }}⟩
+/-- Given an object `X` of an adhesive category `C`, the coproduct of two subobjects of `X` is their
+  pushout in `C` over their pullback. -/
+def isColimitBinaryCofan (a b : Subobject X) :
+    IsColimit (BinaryCofan.mk (P := Subobject.mk (pushout.desc a.arrow b.arrow pullback.condition))
+      (le_mk_of_comm (pushout.inl _ _) (pushout.inl_desc _ _ _)).hom
+      (le_mk_of_comm (pushout.inr _ _) (pushout.inr_desc _ _ _)).hom) :=
+  BinaryCofan.isColimitMk (fun s ↦ (mk_le_of_comm
+      (pushout.desc (underlying.map (s.ι.app ⟨WalkingPair.left⟩))
+      (underlying.map (s.ι.app ⟨WalkingPair.right⟩))
+      (by ext; simp [pullback.condition])) (by cat_disch)).hom)
+    (by intros; rfl) (by intros; rfl) (by intros; rfl)
 
-instance [Adhesive C] {X : C} : HasBinaryCoproducts (Subobject X) := by
-  apply hasBinaryCoproducts_of_hasColimit_pair
+instance [Adhesive C] {X : C} : HasBinaryCoproducts (Subobject X) where
+  has_colimit F := by
+    have : HasColimit (pair (F.obj ⟨WalkingPair.left⟩) (F.obj ⟨WalkingPair.right⟩)) :=
+      ⟨⟨⟨_, isColimitBinaryCofan (F.obj ⟨WalkingPair.left⟩) (F.obj ⟨WalkingPair.right⟩)⟩⟩⟩
+    apply hasColimit_of_iso (diagramIsoPair F)
 
-end CategoryTheory
+end CategoryTheory.Adhesive
