@@ -34,6 +34,9 @@ If `C₂` has pullbacks, then we define the Leibniz pullback (often called pullb
 canonical projection `(PullbackObjObj.ofHasPullback G f₁ f₃).π`. This defines a bifunctor
 `G.leibnizPullback : (Arrow C₁)ᵒᵖ ⥤ Arrow C₃ ⥤ Arrow C₂`.
 
+If `C₂` has pullbacks and `C₃` has pushouts, then a parameterized adjunction `adj₂ : F ⊣₂ G` induces
+a parameterized adjunction `F.leibnizAdjunction G adj₂ : F.leibnizPushout ⊣₂ G.leibnizPullback`.
+
 ## References
 
 * [Emily Riehl, Dominic Verity, *Elements of ∞-Category Theory*, Definition C.2.8][RV22]
@@ -405,71 +408,67 @@ def leibnizPullback [HasPullbacks C₂] : (Arrow C₁)ᵒᵖ ⥤ Arrow C₃ ⥤ 
 
 noncomputable section
 
+open PushoutObjObj PullbackObjObj ParametrizedAdjunction
+
+attribute [local simp] ofHasPushout_inl ofHasPushout_inr ι
+  ofHasPullback_fst ofHasPullback_snd π
+
 namespace LeibnizAdjunction
 
-def adj [HasPullbacks C₂] [HasPushouts C₃] (adj₂ : F ⊣₂ G) (X₁ : Arrow C₁) :
+/-- Given a parametrized adjunction `F ⊣₂ G` and an arrow `X₁ : Arrow C₁`, this is the induced
+  adjunction `F.leibnizPushout.obj X₁ ⊣ G.leibnizPullback.obj (op X₁)`. -/
+@[simps]
+def adj (adj₂ : F ⊣₂ G) (X₁ : Arrow C₁) [HasPullbacks C₂] [HasPushouts C₃] :
     F.leibnizPushout.obj X₁ ⊣ G.leibnizPullback.obj (op X₁) where
   unit := {
     app X₂ := {
-      left := adj₂.homEquiv (pushout.inl _ _)
-      right := pullback.lift (adj₂.homEquiv (pushout.inr _ _)) (adj₂.homEquiv (𝟙 _))
-        (by simp [PushoutObjObj.ι, ← adj₂.homEquiv_naturality_one,
-          ← adj₂.homEquiv_naturality_three])
+      left := adj₂.homEquiv (pushout.inl ..)
+      right := pullback.lift (adj₂.homEquiv (pushout.inr ..)) (adj₂.homEquiv (𝟙 _))
+          (by simp [← homEquiv_naturality_one, ← homEquiv_naturality_three])
       w := by
         apply pullback.hom_ext
-        · simp [PullbackObjObj.ofHasPullback_π, ← adj₂.homEquiv_naturality_one,
-            ← adj₂.homEquiv_naturality_two, pushout.condition]
-        · simp [PullbackObjObj.ofHasPullback_π, PushoutObjObj.ι, ← adj₂.homEquiv_naturality_two,
-            ← adj₂.homEquiv_naturality_three]}
+        · simp [← homEquiv_naturality_one, ← homEquiv_naturality_two, pushout.condition]
+        · simp [← homEquiv_naturality_two, ← homEquiv_naturality_three]}
     naturality _ _ _ := by
       ext
-      · simp [PushoutObjObj.ofHasPushout_inl, ← adj₂.homEquiv_naturality_two,
-          ← adj₂.homEquiv_naturality_three]
-      · apply pullback.hom_ext
-        · simp [PushoutObjObj.ofHasPushout_inr, PullbackObjObj.ofHasPullback_fst,
-            ← adj₂.homEquiv_naturality_two, ← adj₂.homEquiv_naturality_three]
-        · simp [PushoutObjObj.ofHasPushout_inl, PullbackObjObj.ofHasPullback_snd,
-            ← adj₂.homEquiv_naturality_two, ← adj₂.homEquiv_naturality_three]}
+      · simp [← homEquiv_naturality_two, ← homEquiv_naturality_three]
+      · apply pullback.hom_ext <;> simp [← homEquiv_naturality_two, ← homEquiv_naturality_three]}
   counit := {
     app X₃ := {
-      left := pushout.desc (adj₂.homEquiv.symm (𝟙 _)) (adj₂.homEquiv.symm (pullback.fst _ _))
-        (by simp [PullbackObjObj.ofHasPullback_π, ← adj₂.homEquiv_symm_naturality_one,
-          ← adj₂.homEquiv_symm_naturality_two])
-      right := adj₂.homEquiv.symm (pullback.snd _ _)
+      left := pushout.desc (adj₂.homEquiv.symm (𝟙 _)) (adj₂.homEquiv.symm (pullback.fst ..))
+        (by simp [← homEquiv_symm_naturality_one, ← homEquiv_symm_naturality_two])
+      right := adj₂.homEquiv.symm (pullback.snd ..)
       w := by
         apply pushout.hom_ext
-        · simp [PushoutObjObj.ι, PullbackObjObj.ofHasPullback_π,
-            ← adj₂.homEquiv_symm_naturality_two, ← adj₂.homEquiv_symm_naturality_three]
-        · simp [PushoutObjObj.ι, ← adj₂.homEquiv_symm_naturality_one,
-            ← adj₂.homEquiv_symm_naturality_three, pullback.condition]}
+        · simp [← homEquiv_symm_naturality_two, ← homEquiv_symm_naturality_three]
+        · simp [← homEquiv_symm_naturality_one, ← homEquiv_symm_naturality_three,
+            pullback.condition]}
     naturality _ _ _ := by
       ext
-      · apply pushout.hom_ext
-        · simp [PushoutObjObj.ofHasPushout_inl, ← adj₂.homEquiv_symm_naturality_two,
-            ← adj₂.homEquiv_symm_naturality_three]
-        · simp [PushoutObjObj.ofHasPushout_inr, PullbackObjObj.ofHasPullback_fst,
-            ← adj₂.homEquiv_symm_naturality_two, ← adj₂.homEquiv_symm_naturality_three]
-      · simp [PullbackObjObj.ofHasPullback_snd, ← adj₂.homEquiv_symm_naturality_two,
-          ← adj₂.homEquiv_symm_naturality_three]}
+      · apply pushout.hom_ext <;> simp [← homEquiv_symm_naturality_two,
+          ← homEquiv_symm_naturality_three]
+      · simp [← homEquiv_symm_naturality_two, ← homEquiv_symm_naturality_three]}
   left_triangle_components _ := by
     ext
-    · apply pushout.hom_ext <;>
-      simp [PushoutObjObj.ofHasPushout_pt, PushoutObjObj.ofHasPushout_inl,
-        PushoutObjObj.ofHasPushout_inr, ← adj₂.homEquiv_symm_naturality_two]
-    · sorry
+    · apply pushout.hom_ext <;> simp [← homEquiv_symm_naturality_two, ofHasPushout_pt]
+    · simp [← homEquiv_symm_naturality_two]
   right_triangle_components _ := by
     ext
-    · sorry
-    · sorry
+    · simp [← homEquiv_naturality_three]
+    · apply pullback.hom_ext <;> simp [← homEquiv_naturality_three]
 
 end LeibnizAdjunction
 
-def leibnizAdjunction [HasPullbacks C₂] [HasPushouts C₃] (adj₂ : F ⊣₂ G) :
+/-- The Leibniz (parametrized) adjunction `F.leibnizPushout ⊣₂ G.leibnizPullback` induced by a
+  parameterized adjunction `F ⊣₂ G`. -/
+@[simps]
+def leibnizAdjunction (adj₂ : F ⊣₂ G) [HasPullbacks C₂] [HasPushouts C₃] :
     F.leibnizPushout ⊣₂ G.leibnizPullback where
   adj X₁ := LeibnizAdjunction.adj F G adj₂ X₁
-  unit_whiskerRight_map := by
-
-    sorry
+  unit_whiskerRight_map _ := by
+    ext
+    · simp [← homEquiv_naturality_one, ← homEquiv_naturality_three]
+    · apply pullback.hom_ext <;> simp [← homEquiv_naturality_one, ← homEquiv_naturality_three]
 
 end
 
