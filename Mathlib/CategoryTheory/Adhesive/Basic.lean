@@ -145,7 +145,7 @@ lemma IsPushout.isVanKampen_iff' {H : IsPushout f g h i} :
     · intro ⟨W', f', g', αW, hf, hg, H''⟩
       rwa [← H' f' g' h' i' αW αX αY αZ hf hg sq_h sq_i H''.toCommSq]
   · intro H' W' X' Y' Z' f' g' h' i' αW αX αY αZ hf hg sq_h sq_i cs
-    letI : HasPullback αX f := hf.hasPullback
+    have : HasPullback αX f := hf.hasPullback
     constructor
     · intro H''
       rw [H' h' i' αX αY αZ sq_h sq_i]
@@ -208,13 +208,13 @@ theorem is_coprod_iff_isPushout {X E Y YE : C} (c : BinaryCofan X E) (hc : IsCol
 theorem IsPushout.isVanKampen_inl {W E X Z : C} (c : BinaryCofan W E) [FinitaryExtensive C]
     [HasPullbacks C] (hc : IsColimit c) (f : W ⟶ X) (h : X ⟶ Z) (i : c.pt ⟶ Z)
     (H : IsPushout f c.inl h i) : H.IsVanKampen := by
-  obtain ⟨sq_h⟩ := (is_coprod_iff_isPushout c hc H.1).mpr H
+  obtain ⟨hc₁⟩ := (is_coprod_iff_isPushout c hc H.1).mpr H
   introv W' hf hg hh hi w
-  obtain ⟨sq_i⟩ := ((BinaryCofan.isVanKampen_iff _).mp (FinitaryExtensive.vanKampen c hc)
+  obtain ⟨hc₂⟩ := ((BinaryCofan.isVanKampen_iff _).mp (FinitaryExtensive.vanKampen c hc)
     (BinaryCofan.mk _ (pullback.fst _ _)) _ _ _ hg.w.symm pullback.condition.symm).mpr
     ⟨hg, IsPullback.of_hasPullback αY c.inr⟩
-  refine (is_coprod_iff_isPushout _ sq_i w).symm.trans ?_
-  refine ((BinaryCofan.isVanKampen_iff _).mp (FinitaryExtensive.vanKampen _ sq_h)
+  refine (is_coprod_iff_isPushout _ hc₂ w).symm.trans ?_
+  refine ((BinaryCofan.isVanKampen_iff _).mp (FinitaryExtensive.vanKampen _ hc₁)
     (BinaryCofan.mk _ _) (pullback.snd _ _) _ _ ?_ hh.w.symm).trans ?_
   · dsimp; rw [← pullback.condition_assoc, Category.assoc, hi.w]
   constructor
@@ -236,10 +236,10 @@ theorem IsPushout.isVanKampen_inl {W E X Z : C} (c : BinaryCofan W E) [FinitaryE
           rw [Category.assoc, pullback.lift_fst]; exact hc₃
     rw [← Category.id_comp αZ, ← show cmp ≫ pullback.snd _ _ = αY from pullback.lift_snd _ _ _]
     apply IsPullback.paste_vert _ (IsPullback.of_hasPullback αZ i)
-    have : cmp = (sq_i.coconePointUniqueUpToIso hc₄).hom := by
-      apply BinaryCofan.IsColimit.hom_ext sq_i
-      exacts [(sq_i.comp_coconePointUniqueUpToIso_hom hc₄ ⟨WalkingPair.left⟩).symm,
-        (sq_i.comp_coconePointUniqueUpToIso_hom hc₄ ⟨WalkingPair.right⟩).symm]
+    have : cmp = (hc₂.coconePointUniqueUpToIso hc₄).hom := by
+      apply BinaryCofan.IsColimit.hom_ext hc₂
+      exacts [(hc₂.comp_coconePointUniqueUpToIso_hom hc₄ ⟨WalkingPair.left⟩).symm,
+        (hc₂.comp_coconePointUniqueUpToIso_hom hc₄ ⟨WalkingPair.right⟩).symm]
     rw [this]
     exact IsPullback.of_vert_isIso ⟨by rw [← this, Category.comp_id, pullback.lift_fst]⟩
   · rintro ⟨hc₃, hc₄⟩
@@ -280,7 +280,6 @@ class Adhesive (C : Type u) [Category.{v} C] : Prop where
     (H : IsPushout f g h i), H.IsVanKampen
 
 attribute [instance] Adhesive.hasPullback_of_mono_left Adhesive.hasPushout_of_mono_left
-  Limits.hasPullback_symmetry
 
 theorem Adhesive.van_kampen' [Adhesive C] [Mono g] (H : IsPushout f g h i) : H.IsVanKampen :=
   (Adhesive.van_kampen H.flip).flip
@@ -301,6 +300,7 @@ theorem Adhesive.mono_of_isPushout_of_mono_right [Adhesive C] (H : IsPushout f g
     Mono h :=
   (Adhesive.van_kampen' H).mono_of_mono_right
 
+attribute [local instance] Limits.hasPullback_symmetry in
 lemma Adhesive.isPushout_isPullback_isPullback_hom_ext [Adhesive C] [Mono f] (H : IsPushout f g h i)
     {X' Y' Z' : C} {h' : X' ⟶ Z'} {i' : Y' ⟶ Z'}
     {αX : X' ⟶ X} {αY : Y' ⟶ Y} {αZ : Z' ⟶ Z}
@@ -309,20 +309,21 @@ lemma Adhesive.isPushout_isPullback_isPullback_hom_ext [Adhesive C] [Mono f] (H 
     (h'_w : h' ≫ f₁ = h' ≫ f₂) (i'_w : i' ≫ f₁ = i' ≫ f₂) : f₁ = f₂ :=
   IsPushout.isVanKampen_isPullback_isPullback_hom_ext (Adhesive.van_kampen H) hh hi h'_w i'_w
 
+attribute [local instance] Limits.hasPullback_symmetry in
 open IsPullback IsPushout pullback pushout in
 instance Adhesive.desc_mono_of_mono [Adhesive C] {Z A B : C}
     {a : A ⟶ Z} {b : B ⟶ Z} [Mono a] [Mono b] :
     Mono (pushout.desc a b pullback.condition) where
   right_cancellation f g w := by
-    letI : Mono (inl (fst a b) (snd a b)) := mono_of_isPushout_of_mono_right (of_hasPushout ..)
-    letI : Mono (inr (fst a b) (snd a b)) := mono_of_isPushout_of_mono_left (of_hasPushout ..)
-    letI : Mono (inl (fst a b) (snd a b) ≫ desc a b pullback.condition) := by
+    have : Mono (inl (fst a b) (snd a b)) := mono_of_isPushout_of_mono_right (of_hasPushout ..)
+    have : Mono (inr (fst a b) (snd a b)) := mono_of_isPushout_of_mono_left (of_hasPushout ..)
+    have : Mono (inl (fst a b) (snd a b) ≫ desc a b pullback.condition) := by
       rwa [pushout.inl_desc]
-    letI : Mono (inr (fst a b) (snd a b) ≫ desc a b pullback.condition) := by
+    have : Mono (inr (fst a b) (snd a b) ≫ desc a b pullback.condition) := by
       rwa [pushout.inr_desc]
     obtain ⟨_, f', _, _, p₁, p₂, h₁⟩ := (van_kampen (of_hasPushout ..)).exists_vanKampen_diagram
       (of_hasPullback f (inl ..)) (of_hasPullback f (inr ..))
-    letI : Mono f' := by
+    have : Mono f' := by
       rw [← p₁.isoPullback_hom_fst]
       infer_instance
     apply isPushout_isPullback_isPullback_hom_ext (of_hasPushout ..)
