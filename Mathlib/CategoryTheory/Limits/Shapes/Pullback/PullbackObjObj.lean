@@ -6,6 +6,7 @@ Authors: Joël Riou, Jack McKoen
 module
 
 public import Mathlib.CategoryTheory.Limits.Shapes.Pullback.IsPullback.Defs
+public import Mathlib.CategoryTheory.Adjunction.Parametrized
 
 /-!
 # Leibniz Constructions
@@ -401,6 +402,49 @@ def leibnizPullback [HasPullbacks C₂] : (Arrow C₁)ᵒᵖ ⥤ Arrow C₃ ⥤ 
         PullbackObjObj.mapArrowLeft
           (PullbackObjObj.ofHasPullback G ..)
           (PullbackObjObj.ofHasPullback G ..) sq.unop }
+
+noncomputable section
+
+namespace LeibnizAdjunction
+
+variable [HasPullbacks C₂] [HasPushouts C₃] (adj₂ : F ⊣₂ G) (X₁ : Arrow C₁)
+
+def unit : 𝟭 (Arrow C₂) ⟶ F.leibnizPushout.obj X₁ ⋙ G.leibnizPullback.obj (op X₁) where
+  app X₂ := {
+    left := adj₂.homEquiv (pushout.inl _ _)
+    right := pullback.lift (adj₂.homEquiv (pushout.inr _ _)) (adj₂.homEquiv (𝟙 _))
+      (by simp [PushoutObjObj.ι, ← adj₂.homEquiv_naturality_one, ← adj₂.homEquiv_naturality_three])
+    w := by
+      apply pullback.hom_ext
+      · simp [PullbackObjObj.ofHasPullback_π, ← adj₂.homEquiv_naturality_one,
+          ← adj₂.homEquiv_naturality_two, pushout.condition]
+      · simp [PullbackObjObj.ofHasPullback_π, PushoutObjObj.ι, ← adj₂.homEquiv_naturality_three,
+          ← adj₂.homEquiv_naturality_two]}
+  naturality _ _ _ := by
+    ext
+    · simp [PushoutObjObj.ofHasPushout_inl, ← adj₂.homEquiv_naturality_three,
+        ← adj₂.homEquiv_naturality_two]
+    · apply pullback.hom_ext
+      · simp [PushoutObjObj.ofHasPushout_inr, PullbackObjObj.ofHasPullback_fst,
+          ← adj₂.homEquiv_naturality_three, ← adj₂.homEquiv_naturality_two]
+      · sorry
+
+def counit : G.leibnizPullback.obj (op X₁) ⋙ F.leibnizPushout.obj X₁ ⟶ 𝟭 (Arrow C₃) := sorry
+
+def adj : F.leibnizPushout.obj X₁ ⊣ G.leibnizPullback.obj (op X₁) where
+  unit := unit _ _ adj₂ X₁
+  counit := counit ..
+  left_triangle_components := sorry
+  right_triangle_components := sorry
+
+end LeibnizAdjunction
+
+def leibnizAdjunction [HasPullbacks C₂] [HasPushouts C₃] (adj₂ : F ⊣₂ G) :
+    F.leibnizPushout ⊣₂ G.leibnizPullback where
+  adj X₁ := LeibnizAdjunction.adj F G adj₂ X₁
+  unit_whiskerRight_map := sorry
+
+end
 
 end Functor
 
