@@ -407,42 +407,69 @@ noncomputable section
 
 namespace LeibnizAdjunction
 
-variable [HasPullbacks C₂] [HasPushouts C₃] (adj₂ : F ⊣₂ G) (X₁ : Arrow C₁)
-
-def unit : 𝟭 (Arrow C₂) ⟶ F.leibnizPushout.obj X₁ ⋙ G.leibnizPullback.obj (op X₁) where
-  app X₂ := {
-    left := adj₂.homEquiv (pushout.inl _ _)
-    right := pullback.lift (adj₂.homEquiv (pushout.inr _ _)) (adj₂.homEquiv (𝟙 _))
-      (by simp [PushoutObjObj.ι, ← adj₂.homEquiv_naturality_one, ← adj₂.homEquiv_naturality_three])
-    w := by
-      apply pullback.hom_ext
-      · simp [PullbackObjObj.ofHasPullback_π, ← adj₂.homEquiv_naturality_one,
-          ← adj₂.homEquiv_naturality_two, pushout.condition]
-      · simp [PullbackObjObj.ofHasPullback_π, PushoutObjObj.ι, ← adj₂.homEquiv_naturality_three,
-          ← adj₂.homEquiv_naturality_two]}
-  naturality _ _ _ := by
+def adj [HasPullbacks C₂] [HasPushouts C₃] (adj₂ : F ⊣₂ G) (X₁ : Arrow C₁) :
+    F.leibnizPushout.obj X₁ ⊣ G.leibnizPullback.obj (op X₁) where
+  unit := {
+    app X₂ := {
+      left := adj₂.homEquiv (pushout.inl _ _)
+      right := pullback.lift (adj₂.homEquiv (pushout.inr _ _)) (adj₂.homEquiv (𝟙 _))
+        (by simp [PushoutObjObj.ι, ← adj₂.homEquiv_naturality_one,
+          ← adj₂.homEquiv_naturality_three])
+      w := by
+        apply pullback.hom_ext
+        · simp [PullbackObjObj.ofHasPullback_π, ← adj₂.homEquiv_naturality_one,
+            ← adj₂.homEquiv_naturality_two, pushout.condition]
+        · simp [PullbackObjObj.ofHasPullback_π, PushoutObjObj.ι, ← adj₂.homEquiv_naturality_two,
+            ← adj₂.homEquiv_naturality_three]}
+    naturality _ _ _ := by
+      ext
+      · simp [PushoutObjObj.ofHasPushout_inl, ← adj₂.homEquiv_naturality_two,
+          ← adj₂.homEquiv_naturality_three]
+      · apply pullback.hom_ext
+        · simp [PushoutObjObj.ofHasPushout_inr, PullbackObjObj.ofHasPullback_fst,
+            ← adj₂.homEquiv_naturality_two, ← adj₂.homEquiv_naturality_three]
+        · simp [PushoutObjObj.ofHasPushout_inl, PullbackObjObj.ofHasPullback_snd,
+            ← adj₂.homEquiv_naturality_two, ← adj₂.homEquiv_naturality_three]}
+  counit := {
+    app X₃ := {
+      left := pushout.desc (adj₂.homEquiv.symm (𝟙 _)) (adj₂.homEquiv.symm (pullback.fst _ _))
+        (by simp [PullbackObjObj.ofHasPullback_π, ← adj₂.homEquiv_symm_naturality_one,
+          ← adj₂.homEquiv_symm_naturality_two])
+      right := adj₂.homEquiv.symm (pullback.snd _ _)
+      w := by
+        apply pushout.hom_ext
+        · simp [PushoutObjObj.ι, PullbackObjObj.ofHasPullback_π,
+            ← adj₂.homEquiv_symm_naturality_two, ← adj₂.homEquiv_symm_naturality_three]
+        · simp [PushoutObjObj.ι, ← adj₂.homEquiv_symm_naturality_one,
+            ← adj₂.homEquiv_symm_naturality_three, pullback.condition]}
+    naturality _ _ _ := by
+      ext
+      · apply pushout.hom_ext
+        · simp [PushoutObjObj.ofHasPushout_inl, ← adj₂.homEquiv_symm_naturality_two,
+            ← adj₂.homEquiv_symm_naturality_three]
+        · simp [PushoutObjObj.ofHasPushout_inr, PullbackObjObj.ofHasPullback_fst,
+            ← adj₂.homEquiv_symm_naturality_two, ← adj₂.homEquiv_symm_naturality_three]
+      · simp [PullbackObjObj.ofHasPullback_snd, ← adj₂.homEquiv_symm_naturality_two,
+          ← adj₂.homEquiv_symm_naturality_three]}
+  left_triangle_components _ := by
     ext
-    · simp [PushoutObjObj.ofHasPushout_inl, ← adj₂.homEquiv_naturality_three,
-        ← adj₂.homEquiv_naturality_two]
-    · apply pullback.hom_ext
-      · simp [PushoutObjObj.ofHasPushout_inr, PullbackObjObj.ofHasPullback_fst,
-          ← adj₂.homEquiv_naturality_three, ← adj₂.homEquiv_naturality_two]
-      · sorry
-
-def counit : G.leibnizPullback.obj (op X₁) ⋙ F.leibnizPushout.obj X₁ ⟶ 𝟭 (Arrow C₃) := sorry
-
-def adj : F.leibnizPushout.obj X₁ ⊣ G.leibnizPullback.obj (op X₁) where
-  unit := unit _ _ adj₂ X₁
-  counit := counit ..
-  left_triangle_components := sorry
-  right_triangle_components := sorry
+    · apply pushout.hom_ext <;>
+      simp [PushoutObjObj.ofHasPushout_pt, PushoutObjObj.ofHasPushout_inl,
+        PushoutObjObj.ofHasPushout_inr, ← adj₂.homEquiv_symm_naturality_two]
+    · sorry
+  right_triangle_components _ := by
+    ext
+    · sorry
+    · sorry
 
 end LeibnizAdjunction
 
 def leibnizAdjunction [HasPullbacks C₂] [HasPushouts C₃] (adj₂ : F ⊣₂ G) :
     F.leibnizPushout ⊣₂ G.leibnizPullback where
   adj X₁ := LeibnizAdjunction.adj F G adj₂ X₁
-  unit_whiskerRight_map := sorry
+  unit_whiskerRight_map := by
+
+    sorry
 
 end
 
