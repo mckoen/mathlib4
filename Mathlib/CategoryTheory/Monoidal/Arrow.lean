@@ -301,78 +301,6 @@ def PushoutProduct.braiding [BraidedCategory C] (X₁ X₂ : Arrow C) : (X₁ �
     (BraidedCategory.braiding_naturality_right _ _).symm
     (BraidedCategory.braiding_naturality_left _ _).symm))) (β_ _ _) (by cat_disch)
 
-/-
-omit [HasPushouts C] in
-@[reassoc]
-lemma temp₂ (X₁ X₂ X₃ Y₁ Y₃ : Arrow C) (f₁ : X₁ ⟶ Y₁) (f₃ : X₃ ⟶ Y₃) :
-    X₁.right ◁ X₂.left ◁ f₃.right ≫
-    (α_ X₁.right X₂.left Y₃.right).inv ≫
-    f₁.right ▷ X₂.left ▷ Y₃.right ≫
-    (α_ Y₁.right X₂.left Y₃.right).hom =
-    (α_ X₁.right X₂.left X₃.right).inv ≫
-    f₁.right ▷ X₂.left ▷ X₃.right ≫
-    (α_ Y₁.right X₂.left X₃.right).hom ≫
-    Y₁.right ◁ X₂.left ◁ f₃.right := by
-  simp only [associator_inv_naturality_right_assoc, whisker_exchange_assoc,
-    ← associator_inv_naturality_left_assoc, associator_naturality_right]
--/
-
-omit [HasPushouts C] in
-@[reassoc]
-lemma _root_.CategoryTheory.MonoidalCategory.temp₁ (X₁ X₂ X₃ Y₁ Y₂ Y₃ : Arrow C)
-    (f₁ : X₁ ⟶ Y₁) (f₂ : X₂ ⟶ Y₂) (f₃ : X₃ ⟶ Y₃) :
-    (α_ X₁.left X₂.right X₃.right).hom ≫
-    X₁.left ◁ X₂.right ◁ f₃.right ≫
-    (α_ X₁.left X₂.right Y₃.right).inv ≫
-    f₁.left ▷ X₂.right ▷ Y₃.right ≫
-    (α_ Y₁.left X₂.right Y₃.right).hom ≫
-    Y₁.left ◁ f₂.right ▷ Y₃.right =
-    f₁.left ▷ X₂.right ▷ X₃.right ≫
-    (α_ Y₁.left X₂.right X₃.right).hom ≫
-    Y₁.left ◁ f₂.right ▷ X₃.right ≫
-    Y₁.left ◁ Y₂.right ◁ f₃.right := by
-  simp only [Iso.inv_hom_id_assoc, associator_naturality_left_assoc, whisker_exchange_assoc,
-    ← MonoidalCategory.whiskerLeft_comp, whisker_exchange]
-
-@[reassoc]
-lemma _root_.CategoryTheory.MonoidalCategory.temp₃ (X₁ X₂ X₃ Y₁ Y₂ Y₃ : Arrow C)
-    (f₁ : X₁ ⟶ Y₁) (f₂ : X₂ ⟶ Y₂) (f₃ : X₃ ⟶ Y₃) :
-    X₁.right ◁ X₂.left ◁ f₃.right ≫
-    (α_ X₁.right X₂.left Y₃.right).inv ≫
-    f₁.right ▷ X₂.left ▷ Y₃.right ≫
-    (α_ Y₁.right X₂.left Y₃.right).hom ≫
-    Y₁.right ◁ f₂.left ▷ Y₃.right ≫
-    Y₁.right ◁ pushout.inr (Y₂.hom ▷ Y₃.left) (Y₂.left ◁ Y₃.hom) =
-    X₁.right ◁ f₂.left ▷ X₃.right ≫
-    X₁.right ◁ Y₂.left ◁ f₃.right ≫
-    X₁.right ◁ pushout.inr (Y₂.hom ▷ Y₃.left) (Y₂.left ◁ Y₃.hom) ≫
-    f₁.right ▷ pushout (Y₂.hom ▷ Y₃.left) (Y₂.left ◁ Y₃.hom) := by
-  rw [← MonoidalCategory.whiskerLeft_comp_assoc, whisker_exchange, whisker_exchange_assoc,
-    ← whisker_exchange, associator_inv_naturality_right_assoc, whisker_exchange_assoc,
-    ← associator_inv_naturality_left_assoc, associator_naturality_right_assoc, Iso.inv_hom_id_assoc,
-    MonoidalCategory.whiskerLeft_comp_assoc]
-
-lemma PushoutProduct.associator_naturality {C : Type u} [Category.{v} C] [HasPushouts C]
-    [CartesianMonoidalCategory C]
-    [∀ S : C, PreservesColimitsOfSize (tensorLeft S)]
-    [∀ S : C, PreservesColimitsOfSize (tensorRight S)]
-    {X₁ X₂ X₃ Y₁ Y₂ Y₃ : Arrow C} (f₁ : X₁ ⟶ Y₁) (f₂ : X₂ ⟶ Y₂) (f₃ : X₃ ⟶ Y₃) :
-    ((pushoutProduct.map ((pushoutProduct.map f₁).app X₂ ≫
-    (pushoutProduct.obj Y₁).map f₂)).app X₃ ≫
-    (pushoutProduct.obj (Y₁ □ Y₂)).map f₃) ≫
-    (associator Y₁ Y₂ Y₃).hom =
-    (associator X₁ X₂ X₃).hom ≫
-    (pushoutProduct.map f₁).app (X₂ □ X₃) ≫
-    (pushoutProduct.obj Y₁).map ((pushoutProduct.map f₂).app X₃ ≫
-    (pushoutProduct.obj Y₂).map f₃) := by
-  ext
-  · apply pushout.hom_ext
-    · simp [whisker_exchange_assoc]
-    · apply ((tensorRight _).map_isPushout (IsPushout.of_hasPushout _ _)).hom_ext
-      · simp [← whisker_exchange_assoc, temp₃_assoc]
-      · simp [← whisker_exchange_assoc, temp₁_assoc]
-  · simp
-
 end Monoidal
 
 section CartesianMonoidalClosed
@@ -429,13 +357,24 @@ instance [HasPushouts C] [HasInitial C] [CartesianMonoidalCategory C] [MonoidalC
   whiskerRight f X := (pushoutProduct.map f).app X
   tensorUnit := initial.to (𝟙_ C)
   associator _ _ _ := PushoutProduct.associator ..
-  associator_naturality _ _ _ := by
+  associator_naturality {_ _ _ _ Y₂ Y₃} f₁ f₂ f₃ := by
     ext
     · apply pushout.hom_ext
       · simp [whisker_exchange_assoc]
       · apply ((tensorRight _).map_isPushout (IsPushout.of_hasPushout _ _)).hom_ext
-        · simp [← whisker_exchange_assoc, temp₃_assoc]
-        · simp [← whisker_exchange_assoc, temp₁_assoc]
+        · suffices _ ◁ _ ◁ f₃.right ≫ (α_ _ _ _).inv ≫ f₁.right ▷ _ ▷ _ ≫ (α_ _ _ _).hom ≫
+            _ ◁ f₂.left ▷ _ ≫ _ ◁ pushout.inr _ _ = _ ◁ f₂.left ▷ _ ≫ _ ◁ _ ◁ f₃.right ≫
+            _ ◁ pushout.inr _ _ ≫ f₁.right ▷ pushout (Y₂.hom ▷ Y₃.left) (Y₂.left ◁ Y₃.hom) by
+            simp [← whisker_exchange_assoc, reassoc_of% this]
+          rw [← MonoidalCategory.whiskerLeft_comp_assoc, whisker_exchange, whisker_exchange_assoc,
+            ← whisker_exchange, associator_inv_naturality_right_assoc, whisker_exchange_assoc,
+            ← associator_inv_naturality_left_assoc, associator_naturality_right_assoc,
+            Iso.inv_hom_id_assoc, MonoidalCategory.whiskerLeft_comp_assoc]
+        · suffices ((α_ _ _ _).hom ≫ _ ◁ _ ◁ f₃.right ≫ (α_ _ _ _).inv ≫ f₁.left ▷ _ ▷ _ ≫
+            (α_ _ _ _).hom ≫ _ ◁ f₂.right ▷ _ = f₁.left ▷ _ ▷ _ ≫ (α_ _ _ _).hom ≫
+            _ ◁ f₂.right ▷ _ ≫ _ ◁ _ ◁ f₃.right) by
+            simp [← whisker_exchange_assoc, reassoc_of% this]
+          cat_disch
     · simp
   pentagon _ _ _ _ := by
     ext
