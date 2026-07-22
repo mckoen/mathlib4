@@ -2639,6 +2639,7 @@ public import Mathlib.CategoryTheory.CopyDiscardCategory.Deterministic
 public import Mathlib.CategoryTheory.CopyDiscardCategory.Widesubcategory
 public import Mathlib.CategoryTheory.Core
 public import Mathlib.CategoryTheory.Countable
+public import Mathlib.CategoryTheory.DGCategory.HomotopyCategory
 public import Mathlib.CategoryTheory.Dialectica.Basic
 public import Mathlib.CategoryTheory.Dialectica.Monoidal
 public import Mathlib.CategoryTheory.DifferentialObject

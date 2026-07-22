@@ -1,10 +1,22 @@
-import Mathlib.Algebra.Category.ModuleCat.Colimits
-import Mathlib.Algebra.Category.ModuleCat.Monoidal.Closed
-import Mathlib.Algebra.Homology.Monoidal
-import Mathlib.CategoryTheory.Enriched.Basic
-import Mathlib.CategoryTheory.Monoidal.Limits.Preserves
+/-
+Copyright (c) 2026 Jack McKoen. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Jack McKoen
+-/
 
-universe w
+module
+
+public import Mathlib.Algebra.Category.ModuleCat.Abelian
+public import Mathlib.Algebra.Category.ModuleCat.Colimits
+public import Mathlib.Algebra.Category.ModuleCat.Monoidal.Closed
+public import Mathlib.Algebra.Homology.Monoidal
+public import Mathlib.Algebra.Homology.ShortComplex.HomologicalComplex
+public import Mathlib.CategoryTheory.Enriched.Basic
+public import Mathlib.CategoryTheory.Monoidal.Limits.Preserves
+
+@[expose] public section
+
+universe u w
 
 open CategoryTheory
 
@@ -26,4 +38,30 @@ instance : ComplexShape.TensorSigns (ComplexShape.down ℤ) where
     rw [zpow_one, mul_neg, mul_one, neg_neg]
     rfl
 
-abbrev DGCategory (R : Type w) [CommRing R] := EnrichedCategory (ChainComplex (ModuleCat.{w} R) ℤ)
+/-- A category enriched over cochain complexes of `R`-modules. -/
+abbrev DGCategory (R : Type w) [CommRing R] :=
+  EnrichedCategory (CochainComplex (ModuleCat.{w} R) ℤ)
+
+/-- A category enriched over chain complexes of `R`-modules. -/
+abbrev ChainDGCategory (R : Type w) [CommRing R] :=
+  EnrichedCategory (ChainComplex (ModuleCat.{w} R) ℤ)
+
+namespace DGCategory
+
+variable {C : Type u} [DGCategory R C]
+
+/-- The zeroth cohomology of the morphism complex from `X` to `Y`. -/
+noncomputable abbrev H0 (X Y : C) : ModuleCat R :=
+  (X ⟶[CochainComplex (ModuleCat R) ℤ] Y).homology 0
+
+end DGCategory
+
+namespace ChainDGCategory
+
+variable {C : Type u} [ChainDGCategory R C]
+
+/-- The zeroth homology of the morphism complex from `X` to `Y`. -/
+noncomputable abbrev H0 (X Y : C) : ModuleCat R :=
+  (X ⟶[ChainComplex (ModuleCat R) ℤ] Y).homology 0
+
+end ChainDGCategory
