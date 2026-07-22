@@ -40,28 +40,4 @@ instance : ComplexShape.TensorSigns (ComplexShape.down ℤ) where
 
 /-- A category enriched over cochain complexes of `R`-modules. -/
 abbrev DGCategory (R : Type w) [CommRing R] :=
-  EnrichedCategory (CochainComplex (ModuleCat.{w} R) ℤ)
-
-/-- A category enriched over chain complexes of `R`-modules. -/
-abbrev ChainDGCategory (R : Type w) [CommRing R] :=
   EnrichedCategory (ChainComplex (ModuleCat.{w} R) ℤ)
-
-namespace DGCategory
-
-variable {C : Type u} [DGCategory R C]
-
-/-- The zeroth cohomology of the morphism complex from `X` to `Y`. -/
-noncomputable abbrev H0 (X Y : C) : ModuleCat R :=
-  (X ⟶[CochainComplex (ModuleCat R) ℤ] Y).homology 0
-
-end DGCategory
-
-namespace ChainDGCategory
-
-variable {C : Type u} [ChainDGCategory R C]
-
-/-- The zeroth homology of the morphism complex from `X` to `Y`. -/
-noncomputable abbrev H0 (X Y : C) : ModuleCat R :=
-  (X ⟶[ChainComplex (ModuleCat R) ℤ] Y).homology 0
-
-end ChainDGCategory
