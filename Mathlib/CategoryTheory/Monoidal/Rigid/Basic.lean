@@ -641,29 +641,18 @@ theorem rightAdjointMate_tensor {X₁ X₂ Y₁ Y₂ : C}
           (X₂ᘁ : C) ◁ (ε_ X₁ (X₁ᘁ) ▷ X₂)) ⊗≫ ε_ X₂ (X₂ᘁ) := by
       rw [tensorHom_def']
       monoidal
-    _ = 𝟙 _ ⊗≫
-        ((Y₂ᘁ : C) ◁ (fᘁ ▷ X₁)) ▷ X₂ ⊗≫
-        ((Y₂ᘁ : C) ◁ (ε_ X₁ (X₁ᘁ) ▷ X₂) ≫
-          gᘁ ▷ ((𝟙_ C) ⊗ X₂)) ⊗≫
-        ε_ X₂ (X₂ᘁ) := by
+    _ = 𝟙 _ ⊗≫ ((Y₂ᘁ : C) ◁ (fᘁ ▷ X₁)) ▷ X₂ ⊗≫ ((Y₂ᘁ : C) ◁ (ε_ X₁ (X₁ᘁ) ▷ X₂) ≫
+          gᘁ ▷ ((𝟙_ C) ⊗ X₂)) ⊗≫ ε_ X₂ (X₂ᘁ) := by
       rw [← whisker_exchange]
-    _ = 𝟙 _ ⊗≫
-        ((Y₂ᘁ : C) ◁ ((fᘁ ▷ X₁) ≫ ε_ X₁ (X₁ᘁ))) ▷ X₂ ⊗≫
+    _ = 𝟙 _ ⊗≫ ((Y₂ᘁ : C) ◁ ((fᘁ ▷ X₁) ≫ ε_ X₁ (X₁ᘁ))) ▷ X₂ ⊗≫
         ((gᘁ ▷ X₂) ≫ ε_ X₂ (X₂ᘁ)) := by monoidal
-    _ = 𝟙 _ ⊗≫
-        ((Y₂ᘁ : C) ◁ (((Y₁ᘁ : C) ◁ f) ≫ ε_ Y₁ (Y₁ᘁ))) ▷ X₂ ⊗≫
+    _ = 𝟙 _ ⊗≫ ((Y₂ᘁ : C) ◁ (((Y₁ᘁ : C) ◁ f) ≫ ε_ Y₁ (Y₁ᘁ))) ▷ X₂ ⊗≫
         (((Y₂ᘁ : C) ◁ g) ≫ ε_ Y₂ (Y₂ᘁ)) := by
       rw [rightAdjointMate_comp_evaluation, rightAdjointMate_comp_evaluation]
-    _ = 𝟙 _ ⊗≫
-        ((Y₂ᘁ : C) ◁ ((Y₁ᘁ : C) ◁ f)) ▷ X₂ ⊗≫
-        (Y₂ᘁ : C) ◁
-          ((ε_ Y₁ (Y₁ᘁ) ▷ X₂) ≫ (𝟙_ C) ◁ g) ⊗≫
-        ε_ Y₂ (Y₂ᘁ) := by monoidal
-    _ = 𝟙 _ ⊗≫
-        ((Y₂ᘁ : C) ◁ ((Y₁ᘁ : C) ◁ f)) ▷ X₂ ⊗≫
-        (Y₂ᘁ : C) ◁
-          (((Y₁ᘁ ⊗ Y₁) ◁ g) ≫ ε_ Y₁ (Y₁ᘁ) ▷ Y₂) ⊗≫
-        ε_ Y₂ (Y₂ᘁ) := by
+    _ = 𝟙 _ ⊗≫ ((Y₂ᘁ : C) ◁ ((Y₁ᘁ : C) ◁ f)) ▷ X₂ ⊗≫ (Y₂ᘁ : C) ◁ ((ε_ Y₁ (Y₁ᘁ) ▷ X₂) ≫
+          (𝟙_ C) ◁ g) ⊗≫ ε_ Y₂ (Y₂ᘁ) := by monoidal
+    _ = 𝟙 _ ⊗≫ ((Y₂ᘁ : C) ◁ ((Y₁ᘁ : C) ◁ f)) ▷ X₂ ⊗≫ (Y₂ᘁ : C) ◁ (((Y₁ᘁ ⊗ Y₁) ◁ g) ≫
+          ε_ Y₁ (Y₁ᘁ) ▷ Y₂) ⊗≫ ε_ Y₂ (Y₂ᘁ) := by
       rw [← whisker_exchange]
     _ = _ := by
       rw [tensorHom_def]

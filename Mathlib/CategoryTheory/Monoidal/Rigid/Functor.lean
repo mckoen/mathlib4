@@ -20,7 +20,8 @@ to `(Cᵒᵖ)ᴹᵒᵖ` (the monoidal opposite of the opposite category).
   `X` to `ᘁX` and `f` to `ᘁf`.
 * `rightDualFunctor C`: For a right rigid category, the functor `C ⥤ (Cᵒᵖ)ᴹᵒᵖ` sending
   `X` to `Xᘁ` and `f` to `fᘁ`.
-* `doubleRightDualFunctor C`: The double-right-dual endofunctor on a right rigid category.
+* `doubleRightDualFunctor C`: The functor `C ⥤ C` on a right rigid category sending
+  `X` to `Xᘁᘁ` and `f` to `fᘁᘁ`.
 
 ## Future work
 
@@ -29,8 +30,7 @@ to `(Cᵒᵖ)ᴹᵒᵖ` (the monoidal opposite of the opposite category).
 
 namespace CategoryTheory
 
-open Category MonoidalCategory MonoidalOpposite Opposite
-open Functor.LaxMonoidal Functor.OplaxMonoidal
+open Category MonoidalCategory MonoidalOpposite Opposite Functor.LaxMonoidal Functor.OplaxMonoidal
 
 universe v u
 
@@ -53,6 +53,7 @@ end LeftRigid
 section RightRigid
 
 variable [RightRigidCategory C]
+set_option backward.isDefEq.respectTransparency.types false
 
 /-- The right dual functor from `C` to `(Cᵒᵖ)ᴹᵒᵖ`. -/
 @[simps obj map, expose]
@@ -62,18 +63,11 @@ public def rightDualFunctor : C ⥤ (Cᵒᵖ)ᴹᵒᵖ where
   map_id X := by simp [rightAdjointMate_id]
   map_comp f g := by simp [comp_rightAdjointMate]
 
+attribute [local instance] hasRightDualTensor in
 omit [RightRigidCategory C] in
 private theorem rightAdjointMate_associator (X Y Z : C)
     [HasRightDual X] [HasRightDual Y] [HasRightDual Z] :
-    @rightAdjointMate C _ _ ((X ⊗ Y) ⊗ Z) (X ⊗ (Y ⊗ Z))
-      (@hasRightDualTensor C _ _ (X ⊗ Y) Z
-        (@hasRightDualTensor C _ _ X Y _ _) _)
-      (@hasRightDualTensor C _ _ X (Y ⊗ Z) _
-        (@hasRightDualTensor C _ _ Y Z _ _))
-      (α_ X Y Z).hom =
-        (α_ (Zᘁ : C) (Yᘁ : C) (Xᘁ : C)).hom := by
-  let hXY : HasRightDual (X ⊗ Y) := hasRightDualTensor
-  let hYZ : HasRightDual (Y ⊗ Z) := hasRightDualTensor
+    rightAdjointMate (α_ X Y Z).hom = (α_ Zᘁ Yᘁ Xᘁ).hom := by
   let hL : HasRightDual ((X ⊗ Y) ⊗ Z) := {
     rightDual := Zᘁ ⊗ (Yᘁ ⊗ Xᘁ)
     exact := ExactPairing.tensor}
@@ -82,62 +76,45 @@ private theorem rightAdjointMate_associator (X Y Z : C)
     exact := ExactPairing.tensor}
   symm
   apply (@eq_rightAdjointMate_iff C _ _ _ _ hL hR _ _).2
-  dsimp only [hL, hR, hXY, hYZ, HasRightDual.rightDual, HasRightDual.exact]
+  dsimp only [hL, hR, HasRightDual.rightDual, HasRightDual.exact]
   have evalL := @ExactPairing.tensor_evaluation C _ _ (X ⊗ Y) Z
-    (Yᘁ ⊗ Xᘁ) (Zᘁ) hXY.exact HasRightDual.exact
+    (Yᘁ ⊗ Xᘁ) (Zᘁ) hasRightDualTensor.exact HasRightDual.exact
   have evalR := @ExactPairing.tensor_evaluation C _ _ X (Y ⊗ Z)
-    (Xᘁ) (Zᘁ ⊗ Yᘁ) HasRightDual.exact hYZ.exact
-  rw [evalL, evalR]
-  rw [@ExactPairing.tensor_evaluation C _ _ X Y (Xᘁ) (Yᘁ) _ _,
-    @ExactPairing.tensor_evaluation C _ _ Y Z (Yᘁ) (Zᘁ) _ _]
+    (Xᘁ) (Zᘁ ⊗ Yᘁ) HasRightDual.exact hasRightDualTensor.exact
+  rw [evalL, evalR, ExactPairing.tensor_evaluation, ExactPairing.tensor_evaluation]
   monoidal
 
+attribute [local instance] hasRightDualTensor in
 omit [RightRigidCategory C] in
-set_option backward.isDefEq.respectTransparency.types false in
 private theorem rightAdjointMate_leftUnitor (X : C) [HasRightDual X] :
-    @rightAdjointMate C _ _ (𝟙_ C ⊗ X) X
-      (@hasRightDualTensor C _ _ (𝟙_ C) X _ _) _
-      (λ_ X).hom = (ρ_ Xᘁ).inv := by
-  let hI : HasRightDual (𝟙_ C) := {
-    rightDual := 𝟙_ C
-    exact := exactPairingUnit }
+    rightAdjointMate (λ_ X).hom = (ρ_ Xᘁ).inv := by
   let hIX : HasRightDual (𝟙_ C ⊗ X) := {
     rightDual := Xᘁ ⊗ 𝟙_ C
-    exact := @ExactPairing.tensor C _ _ (𝟙_ C) X (𝟙_ C) (Xᘁ) hI.exact _ }
-  change @rightAdjointMate C _ _ (𝟙_ C ⊗ X) X hIX _ (λ_ X).hom =
-    (ρ_ Xᘁ).inv
+    exact := ExactPairing.tensor }
   symm
-  refine (@eq_rightAdjointMate_iff C _ _ (𝟙_ C ⊗ X) X hIX _
-    (λ_ X).hom (ρ_ Xᘁ).inv).2 ?_
-  dsimp only [hIX, hI, HasRightDual.rightDual, HasRightDual.exact]
+  rw [eq_rightAdjointMate_iff (λ_ X).hom (ρ_ Xᘁ).inv]
+  dsimp only [hIX, HasRightDual.rightDual, HasRightDual.exact]
   have evalIX := @ExactPairing.tensor_evaluation C _ _ (𝟙_ C) X
-    (𝟙_ C) (Xᘁ) hI.exact HasRightDual.exact
+    (𝟙_ C) (Xᘁ) hasRightDualUnit.exact HasRightDual.exact
   have evalI :
       @ExactPairing.evaluation C _ _ (𝟙_ C) (𝟙_ C) exactPairingUnit =
         (ρ_ (𝟙_ C)).hom := rfl
   rw [evalIX, evalI]
   monoidal
 
+attribute [local instance] hasRightDualTensor in
 omit [RightRigidCategory C] in
-set_option backward.isDefEq.respectTransparency.types false in
 private theorem rightAdjointMate_rightUnitor (X : C) [HasRightDual X] :
-    @rightAdjointMate C _ _ (X ⊗ 𝟙_ C) X
-      (@hasRightDualTensor C _ _ X (𝟙_ C) _ _) _
-      (ρ_ X).hom = (λ_ Xᘁ).inv := by
-  let hI : HasRightDual (𝟙_ C) := {
-    rightDual := 𝟙_ C
-    exact := exactPairingUnit }
+    rightAdjointMate (ρ_ X).hom = (λ_ Xᘁ).inv := by
   let hXI : HasRightDual (X ⊗ 𝟙_ C) := {
     rightDual := 𝟙_ C ⊗ Xᘁ
-    exact := @ExactPairing.tensor C _ _ X (𝟙_ C) (Xᘁ) (𝟙_ C) _ hI.exact }
-  change @rightAdjointMate C _ _ (X ⊗ 𝟙_ C) X hXI _ (ρ_ X).hom =
-    (λ_ Xᘁ).inv
+    exact := ExactPairing.tensor }
   symm
   refine (@eq_rightAdjointMate_iff C _ _ (X ⊗ 𝟙_ C) X hXI _
     (ρ_ X).hom (λ_ Xᘁ).inv).2 ?_
-  dsimp only [hXI, hI, HasRightDual.rightDual, HasRightDual.exact]
+  dsimp only [hXI, HasRightDual.rightDual, HasRightDual.exact]
   have evalXI := @ExactPairing.tensor_evaluation C _ _ X (𝟙_ C)
-    (Xᘁ) (𝟙_ C) HasRightDual.exact hI.exact
+    (Xᘁ) (𝟙_ C) HasRightDual.exact hasRightDualUnit.exact
   have evalI :
       @ExactPairing.evaluation C _ _ (𝟙_ C) (𝟙_ C) exactPairingUnit =
         (ρ_ (𝟙_ C)).hom := rfl
@@ -166,7 +143,6 @@ private theorem rightDualIso_hom_trans {X Y₁ Y₂ Y₃ : C}
   simp
 
 omit [RightRigidCategory C] in
-set_option backward.isDefEq.respectTransparency.types false in
 private theorem rightDualIso_tensor {X₁ X₂ Y₁ Y₂ Z₁ Z₂ : C}
     (p₁ : ExactPairing X₁ Y₁) (p₂ : ExactPairing X₂ Y₂)
     (q₁ : ExactPairing X₁ Z₁) (q₂ : ExactPairing X₂ Z₂) :
@@ -232,7 +208,6 @@ private theorem rightAdjointMate_naturality {X Y A₁ A₂ B₁ B₂ : C}
         f (𝟙 Y)
 
 omit [RightRigidCategory C] in
-set_option backward.isDefEq.respectTransparency.types false in
 private theorem rightDualTensorIso_associativity (X Y Z : C)
     [HasRightDual X] [HasRightDual Y] [HasRightDual Z]
     [HasRightDual (X ⊗ Y)] [HasRightDual (Y ⊗ Z)]
@@ -296,7 +271,6 @@ private theorem rightDualTensorIso_associativity (X Y Z : C)
   exact rightAdjointMate_naturality (C := C) pA pAL₂ pB pBR₂ (α_ X Y Z).hom
 
 omit [RightRigidCategory C] in
-set_option backward.isDefEq.respectTransparency.types false in
 private theorem rightDualTensorIso_left_unitality (X : C)
     [hX : HasRightDual X] [hI : HasRightDual (𝟙_ C)]
     [hIX : HasRightDual (𝟙_ C ⊗ X)] :
@@ -333,7 +307,6 @@ private theorem rightDualTensorIso_left_unitality (X : C)
   exact h
 
 omit [RightRigidCategory C] in
-set_option backward.isDefEq.respectTransparency.types false in
 private theorem rightDualTensorIso_right_unitality (X : C)
     [hX : HasRightDual X] [hI : HasRightDual (𝟙_ C)]
     [hXI : HasRightDual (X ⊗ 𝟙_ C)] :
@@ -369,32 +342,23 @@ private theorem rightDualTensorIso_right_unitality (X : C)
     (λ_ Xᘁ).inv at h
   exact h
 
-set_option backward.isDefEq.respectTransparency.types false in
 /-- The canonical core monoidal structure on the right dual functor. -/
 public def rightDualFunctorCoreMonoidal : (rightDualFunctor C).CoreMonoidal where
-  εIso :=
-    (@rightDualUnitIso C _ _ (RightRigidCategory.rightDual (C := C) (𝟙_ C))).op.mop
+  εIso := (@rightDualUnitIso C _ _ (RightRigidCategory.rightDual (𝟙_ C))).op.mop
   μIso X Y := (rightDualTensorIso X Y).op.mop
-  μIso_hom_natural_left := by
-    intro X Y f Z
+  μIso_hom_natural_left {X Y} f Z := by
     apply MonoidalOpposite.hom_ext
     apply Quiver.Hom.unop_inj
-    simpa [rightDualFunctor] using
-      (rightDualTensorIso_hom_naturality f (𝟙 Z)).symm
-  μIso_hom_natural_right := by
-    intro X Y Z f
+    simpa [rightDualFunctor] using (rightDualTensorIso_hom_naturality f (𝟙 Z)).symm
+  μIso_hom_natural_right {X Y} Z f := by
     apply MonoidalOpposite.hom_ext
     apply Quiver.Hom.unop_inj
-    simpa [rightDualFunctor] using
-      (rightDualTensorIso_hom_naturality (𝟙 Z) f).symm
-  associativity := by
-    intro X Y Z
+    simpa [rightDualFunctor] using (rightDualTensorIso_hom_naturality (𝟙 Z) f).symm
+  associativity X Y Z := by
     apply MonoidalOpposite.hom_ext
     apply Quiver.Hom.unop_inj
-    simpa [rightDualFunctor] using
-      (rightDualTensorIso_associativity (C := C) X Y Z)
-  left_unitality := by
-    intro X
+    simpa [rightDualFunctor] using (rightDualTensorIso_associativity C X Y Z)
+  left_unitality X := by
     apply MonoidalOpposite.hom_ext
     apply Quiver.Hom.unop_inj
     simpa [rightDualFunctor] using
@@ -402,8 +366,7 @@ public def rightDualFunctorCoreMonoidal : (rightDualFunctor C).CoreMonoidal wher
         (RightRigidCategory.rightDual (C := C) X)
         (RightRigidCategory.rightDual (C := C) (𝟙_ C))
         (RightRigidCategory.rightDual (C := C) (𝟙_ C ⊗ X)))
-  right_unitality := by
-    intro X
+  right_unitality X := by
     apply MonoidalOpposite.hom_ext
     apply Quiver.Hom.unop_inj
     simpa [rightDualFunctor] using
@@ -413,292 +376,115 @@ public def rightDualFunctorCoreMonoidal : (rightDualFunctor C).CoreMonoidal wher
         (RightRigidCategory.rightDual (C := C) (X ⊗ 𝟙_ C)))
 
 /-- The canonical monoidal structure on the right dual functor. -/
-@[instance_reducible]
+@[instance_reducible, instance]
 public def rightDualFunctorMonoidal : (rightDualFunctor C).Monoidal :=
   (rightDualFunctorCoreMonoidal C).toMonoidal
 
-attribute [instance] rightDualFunctorMonoidal
+@[simp] theorem rightDualFunctor_ε :
+    letI := (RightRigidCategory.rightDual (𝟙_ C))
+    ε (rightDualFunctor C) = rightDualUnitIso.hom.op.mop := rfl
 
-set_option backward.isDefEq.respectTransparency.types false in
-@[simp]
-theorem rightDualFunctor_ε :
-    ε (rightDualFunctor C) =
-      (@rightDualUnitIso C _ _
-        (RightRigidCategory.rightDual (C := C) (𝟙_ C))).hom.op.mop :=
-  rfl
+@[simp] theorem rightDualFunctor_η :
+    letI := (RightRigidCategory.rightDual (𝟙_ C))
+    η (rightDualFunctor C) = rightDualUnitIso.inv.op.mop := rfl
 
-set_option backward.isDefEq.respectTransparency.types false in
-@[simp]
-theorem rightDualFunctor_η :
-    η (rightDualFunctor C) =
-      (@rightDualUnitIso C _ _
-        (RightRigidCategory.rightDual (C := C) (𝟙_ C))).inv.op.mop :=
-  rfl
+@[simp] theorem rightDualFunctor_μ (X Y : C) :
+    μ (rightDualFunctor C) X Y = (rightDualTensorIso X Y).hom.op.mop := rfl
 
-set_option backward.isDefEq.respectTransparency.types false in
-@[simp]
-theorem rightDualFunctor_μ (X Y : C) :
-    μ (rightDualFunctor C) X Y = (rightDualTensorIso X Y).hom.op.mop :=
-  rfl
-
-set_option backward.isDefEq.respectTransparency.types false in
-@[simp]
-theorem rightDualFunctor_δ (X Y : C) :
-    δ (rightDualFunctor C) X Y = (rightDualTensorIso X Y).inv.op.mop :=
-  rfl
-
-/-- The conjugate of the right dual functor, used internally to construct the
-monoidal structure on the double-right-dual functor. -/
-private def rightDualFunctorConjugate : (Cᵒᵖ)ᴹᵒᵖ ⥤ C :=
-  let d : C ⥤ Cᵒᵖ := rightDualFunctor C ⋙ unmopFunctor Cᵒᵖ
-  unmopFunctor Cᵒᵖ ⋙ d.leftOp
-
-set_option backward.isDefEq.respectTransparency.types false in
-@[instance_reducible]
-private def rightDualFunctorConjugateMonoidal :
-    (rightDualFunctorConjugate C).Monoidal where
-  ε := (η (rightDualFunctor C)).unmop.unop
-  μ X Y := (δ (rightDualFunctor C) (unop (unmop Y)) (unop (unmop X))).unmop.unop
-  η := (ε (rightDualFunctor C)).unmop.unop
-  δ X Y := (μ (rightDualFunctor C) (unop (unmop Y)) (unop (unmop X))).unmop.unop
-  μ_natural_left := by
-    intro X Y f X'
-    have h := congrArg (fun k => k.unmop.unop)
-      (Functor.OplaxMonoidal.δ_natural_right (rightDualFunctor C)
-        (unop (unmop X')) f.unmop.unop)
-    change
-      f.unmop.unopᘁ ▷ (unop (unmop X'))ᘁ ≫
-          (δ (rightDualFunctor C) (unop (unmop X')) (unop (unmop Y))).unmop.unop =
-        (δ (rightDualFunctor C) (unop (unmop X')) (unop (unmop X))).unmop.unop ≫
-          ((unop (unmop X')) ◁ f.unmop.unop)ᘁ
-    simpa [rightDualFunctor] using h
-  μ_natural_right := by
-    intro X Y X' f
-    have h := congrArg (fun k => k.unmop.unop)
-      (Functor.OplaxMonoidal.δ_natural_left (rightDualFunctor C)
-        f.unmop.unop (unop (unmop X')))
-    change
-      (unop (unmop X'))ᘁ ◁ f.unmop.unopᘁ ≫
-          (δ (rightDualFunctor C) (unop (unmop Y)) (unop (unmop X'))).unmop.unop =
-        (δ (rightDualFunctor C) (unop (unmop X)) (unop (unmop X'))).unmop.unop ≫
-          (f.unmop.unop ▷ (unop (unmop X')))ᘁ
-    simpa [rightDualFunctor] using h
-  associativity := by
-    intro X Y Z
-    have h := congrArg (fun k => k.unmop.unop)
-      (Functor.OplaxMonoidal.associativity (rightDualFunctor C)
-        (unop (unmop Z)) (unop (unmop Y)) (unop (unmop X)))
-    change
-      (δ (rightDualFunctor C) (unop (unmop Y)) (unop (unmop X))).unmop.unop ▷
-            (unop (unmop Z))ᘁ ≫
-          (δ (rightDualFunctor C) (unop (unmop Z))
-            (unop (unmop Y) ⊗ unop (unmop X))).unmop.unop ≫
-          (α_ (unop (unmop Z)) (unop (unmop Y)) (unop (unmop X))).homᘁ =
-        (α_ ((unop (unmop X))ᘁ : C) ((unop (unmop Y))ᘁ : C)
-          ((unop (unmop Z))ᘁ : C)).hom ≫
-          (unop (unmop X))ᘁ ◁
-            (δ (rightDualFunctor C) (unop (unmop Z)) (unop (unmop Y))).unmop.unop ≫
-          (δ (rightDualFunctor C)
-            (unop (unmop Z) ⊗ unop (unmop Y)) (unop (unmop X))).unmop.unop
-    simpa [rightDualFunctor] using h.symm
-  left_unitality := by
-    intro X
-    have h := congrArg (fun k => k.unmop.unop)
-      (Functor.OplaxMonoidal.right_unitality (rightDualFunctor C) (unop (unmop X)))
-    change
-      (λ_ ((unop (unmop X))ᘁ : C)).hom =
-        (η (rightDualFunctor C)).unmop.unop ▷ (unop (unmop X))ᘁ ≫
-          (δ (rightDualFunctor C) (unop (unmop X)) (𝟙_ C)).unmop.unop ≫
-          (ρ_ (unop (unmop X))).invᘁ
-    simpa [rightDualFunctor] using h
-  right_unitality := by
-    intro X
-    have h := congrArg (fun k => k.unmop.unop)
-      (Functor.OplaxMonoidal.left_unitality (rightDualFunctor C) (unop (unmop X)))
-    change
-      (ρ_ ((unop (unmop X))ᘁ : C)).hom =
-        (unop (unmop X))ᘁ ◁ (η (rightDualFunctor C)).unmop.unop ≫
-          (δ (rightDualFunctor C) (𝟙_ C) (unop (unmop X))).unmop.unop ≫
-          (λ_ (unop (unmop X))).invᘁ
-    simpa [rightDualFunctor] using h
-  δ_natural_left := by
-    intro X Y f X'
-    have h := congrArg (fun k => k.unmop.unop)
-      (Functor.LaxMonoidal.μ_natural_right (rightDualFunctor C)
-        (unop (unmop X')) f.unmop.unop)
-    change
-      (μ (rightDualFunctor C) (unop (unmop X')) (unop (unmop X))).unmop.unop ≫
-          f.unmop.unopᘁ ▷ (unop (unmop X'))ᘁ =
-        ((unop (unmop X')) ◁ f.unmop.unop)ᘁ ≫
-          (μ (rightDualFunctor C) (unop (unmop X')) (unop (unmop Y))).unmop.unop
-    simpa [rightDualFunctor] using h
-  δ_natural_right := by
-    intro X Y X' f
-    have h := congrArg (fun k => k.unmop.unop)
-      (Functor.LaxMonoidal.μ_natural_left (rightDualFunctor C)
-        f.unmop.unop (unop (unmop X')))
-    change
-      (μ (rightDualFunctor C) (unop (unmop X)) (unop (unmop X'))).unmop.unop ≫
-          (unop (unmop X'))ᘁ ◁ f.unmop.unopᘁ =
-        (f.unmop.unop ▷ (unop (unmop X')))ᘁ ≫
-          (μ (rightDualFunctor C) (unop (unmop Y)) (unop (unmop X'))).unmop.unop
-    simpa [rightDualFunctor] using h
-  oplax_associativity := by
-    intro X Y Z
-    have h := congrArg (fun k => k.unmop.unop)
-      (Functor.LaxMonoidal.associativity (rightDualFunctor C)
-        (unop (unmop Z)) (unop (unmop Y)) (unop (unmop X)))
-    change
-      (μ (rightDualFunctor C) (unop (unmop Z))
-            (unop (unmop Y) ⊗ unop (unmop X))).unmop.unop ≫
-          (μ (rightDualFunctor C) (unop (unmop Y)) (unop (unmop X))).unmop.unop ▷
-            (unop (unmop Z))ᘁ ≫
-          (α_ ((unop (unmop X))ᘁ : C) ((unop (unmop Y))ᘁ : C)
-            ((unop (unmop Z))ᘁ : C)).hom =
-        (α_ (unop (unmop Z)) (unop (unmop Y)) (unop (unmop X))).homᘁ ≫
-          (μ (rightDualFunctor C)
-            (unop (unmop Z) ⊗ unop (unmop Y)) (unop (unmop X))).unmop.unop ≫
-          (unop (unmop X))ᘁ ◁
-            (μ (rightDualFunctor C) (unop (unmop Z)) (unop (unmop Y))).unmop.unop
-    simpa [rightDualFunctor] using h.symm
-  oplax_left_unitality := by
-    intro X
-    have h := congrArg (fun k => k.unmop.unop)
-      (Functor.LaxMonoidal.right_unitality (rightDualFunctor C) (unop (unmop X)))
-    change
-      (λ_ ((unop (unmop X))ᘁ : C)).inv =
-        (ρ_ (unop (unmop X))).homᘁ ≫
-          (μ (rightDualFunctor C) (unop (unmop X)) (𝟙_ C)).unmop.unop ≫
-          (ε (rightDualFunctor C)).unmop.unop ▷ (unop (unmop X))ᘁ
-    simpa [rightDualFunctor] using h
-  oplax_right_unitality := by
-    intro X
-    have h := congrArg (fun k => k.unmop.unop)
-      (Functor.LaxMonoidal.left_unitality (rightDualFunctor C) (unop (unmop X)))
-    change
-      (ρ_ ((unop (unmop X))ᘁ : C)).inv =
-        (λ_ (unop (unmop X))).homᘁ ≫
-          (μ (rightDualFunctor C) (𝟙_ C) (unop (unmop X))).unmop.unop ≫
-          (unop (unmop X))ᘁ ◁ (ε (rightDualFunctor C)).unmop.unop
-    simpa [rightDualFunctor] using h
-  ε_η := by
-    have h := congrArg (fun k => k.unmop.unop)
-      (Functor.Monoidal.ε_η (rightDualFunctor C))
-    change
-      (η (rightDualFunctor C)).unmop.unop ≫
-        (ε (rightDualFunctor C)).unmop.unop = 𝟙 _
-    simpa [rightDualFunctor] using h
-  η_ε := by
-    have h := congrArg (fun k => k.unmop.unop)
-      (Functor.Monoidal.η_ε (rightDualFunctor C))
-    change
-      (ε (rightDualFunctor C)).unmop.unop ≫
-        (η (rightDualFunctor C)).unmop.unop = 𝟙 _
-    simpa [rightDualFunctor] using h
-  μ_δ := by
-    intro X Y
-    have h := congrArg (fun k => k.unmop.unop)
-      (Functor.Monoidal.μ_δ (rightDualFunctor C) (unop (unmop Y)) (unop (unmop X)))
-    change
-      (δ (rightDualFunctor C) (unop (unmop Y)) (unop (unmop X))).unmop.unop ≫
-        (μ (rightDualFunctor C) (unop (unmop Y)) (unop (unmop X))).unmop.unop = 𝟙 _
-    simpa [rightDualFunctor] using h
-  δ_μ := by
-    intro X Y
-    have h := congrArg (fun k => k.unmop.unop)
-      (Functor.Monoidal.δ_μ (rightDualFunctor C) (unop (unmop Y)) (unop (unmop X)))
-    change
-      (μ (rightDualFunctor C) (unop (unmop Y)) (unop (unmop X))).unmop.unop ≫
-        (δ (rightDualFunctor C) (unop (unmop Y)) (unop (unmop X))).unmop.unop = 𝟙 _
-    simpa [rightDualFunctor] using h
-
-attribute [local instance] rightDualFunctorConjugateMonoidal
+@[simp] theorem rightDualFunctor_δ (X Y : C) :
+    δ (rightDualFunctor C) X Y = (rightDualTensorIso X Y).inv.op.mop := rfl
 
 /-- The functor `X ↦ Xᘁᘁ`. -/
-@[simps! obj map, expose]
+@[simps!, expose]
 public def doubleRightDualFunctor : C ⥤ C :=
   rightDualFunctor C ⋙ unmopFunctor Cᵒᵖ ⋙ (rightDualFunctor C ⋙ unmopFunctor Cᵒᵖ).leftOp
 
-@[instance_reducible]
-private def doubleRightDualFunctorComposedMonoidal :
-    (doubleRightDualFunctor C).Monoidal :=
-  inferInstanceAs <| (rightDualFunctor C ⋙ rightDualFunctorConjugate C).Monoidal
+variable {C}
+
+local instance : HasRightDual (𝟙_ C) := RightRigidCategory.rightDual (𝟙_ C)
 
 /-- The canonical comparison between the monoidal unit and its double right dual. -/
-public def doubleRightDualUnitIso : 𝟙_ C ≅ (doubleRightDualFunctor C).obj (𝟙_ C) := by
-  let u := @rightDualUnitIso C _ _
-    (RightRigidCategory.rightDual (C := C) (𝟙_ C))
-  exact u.symm ≪≫ @rightAdjointMateIso C _ _ _ _
-    (RightRigidCategory.rightDual (C := C) _)
-    (RightRigidCategory.rightDual (C := C) _) u
+public def doubleRightDualUnitIso : 𝟙_ C ≅ (doubleRightDualFunctor C).obj (𝟙_ C) :=
+  rightDualUnitIso.symm ≪≫ rightAdjointMateIso rightDualUnitIso
 
 /-- The canonical tensorator for the double-right-dual functor. -/
 public def doubleRightDualTensorIso (X Y : C) :
     (doubleRightDualFunctor C).obj X ⊗ (doubleRightDualFunctor C).obj Y ≅
       (doubleRightDualFunctor C).obj (X ⊗ Y) :=
-  (rightDualTensorIso (Yᘁ : C) (Xᘁ : C)).symm ≪≫
-    rightAdjointMateIso (rightDualTensorIso X Y)
+  (rightDualTensorIso Yᘁ Xᘁ).symm ≪≫ rightAdjointMateIso (rightDualTensorIso X Y)
+
+set_option backward.isDefEq.respectTransparency false
+private theorem doubleRightDualTensorIso_hom_naturality {X Y X' Y' : C} (f : X ⟶ X') (g : Y ⟶ Y') :
+    (fᘁᘁ ⊗ₘ gᘁᘁ) ≫ (doubleRightDualTensorIso X' Y').hom =
+      (doubleRightDualTensorIso X Y).hom ≫ (f ⊗ₘ g)ᘁᘁ := by
+  simpa [doubleRightDualTensorIso, ← rightDualTensorIso_inv_naturality_assoc (gᘁ) (fᘁ),
+    cancel_epi, comp_rightAdjointMate] using
+    congrArg rightAdjointMate (rightDualTensorIso_hom_naturality f g).symm
 
 /-- The canonical core monoidal structure on the double-right-dual functor. -/
-public def doubleRightDualFunctorCoreMonoidal :
-    (doubleRightDualFunctor C).CoreMonoidal := by
-  letI := doubleRightDualFunctorComposedMonoidal C
-  exact
-    { εIso := doubleRightDualUnitIso C
-      μIso := fun X Y => doubleRightDualTensorIso (C := C) X Y
-      μIso_hom_natural_left := by
-        intros
-        apply Functor.LaxMonoidal.μ_natural_left
-      μIso_hom_natural_right := by
-        intros
-        apply Functor.LaxMonoidal.μ_natural_right
-      associativity := by
-        intro X Y Z
-        change
-          μ (doubleRightDualFunctor C) X Y ▷ (doubleRightDualFunctor C).obj Z ≫
-              μ (doubleRightDualFunctor C) (X ⊗ Y) Z ≫
-              (doubleRightDualFunctor C).map (α_ X Y Z).hom =
-            (α_ ((doubleRightDualFunctor C).obj X) ((doubleRightDualFunctor C).obj Y)
-              ((doubleRightDualFunctor C).obj Z)).hom ≫
-              (doubleRightDualFunctor C).obj X ◁ μ (doubleRightDualFunctor C) Y Z ≫
-              μ (doubleRightDualFunctor C) X (Y ⊗ Z)
-        apply Functor.LaxMonoidal.associativity
-      left_unitality := by
-        intros
-        apply Functor.LaxMonoidal.left_unitality
-      right_unitality := by
-        intros
-        apply Functor.LaxMonoidal.right_unitality }
+public def doubleRightDualFunctorCoreMonoidal : (doubleRightDualFunctor C).CoreMonoidal where
+  εIso := doubleRightDualUnitIso
+  μIso := doubleRightDualTensorIso
+  μIso_hom_natural_left f Z := by
+    change fᘁᘁ ▷ (Zᘁ)ᘁ ≫ _ = _
+    simpa using doubleRightDualTensorIso_hom_naturality f (𝟙 Z)
+  μIso_hom_natural_right Z f := by
+    change (Zᘁ)ᘁ ◁ fᘁᘁ ≫ _ = _
+    simpa using doubleRightDualTensorIso_hom_naturality (𝟙 Z) f
+  associativity X Y Z := by
+    dsimp [doubleRightDualFunctor, rightDualFunctor, unmopFunctor, Functor.comp, Functor.leftOp]
+    simp only [doubleRightDualTensorIso, Iso.trans_hom, Iso.symm_hom,
+      rightAdjointMateIso_hom, comp_whiskerRight, assoc, whiskerLeft_comp]
+    have hnat₁ := (rightDualTensorIso_inv_naturality (𝟙 (Zᘁ)) (rightDualTensorIso X Y).hom).symm
+    have hinner := congrArg (rightAdjointMate (C := C)) (rightDualTensorIso_associativity C X Y Z)
+    have houter := congrArg (fun k => k.unmop.unop)
+      (Functor.OplaxMonoidal.associativity (rightDualFunctor C) Zᘁ Yᘁ Xᘁ)
+    have hnat₂ := rightDualTensorIso_inv_naturality (rightDualTensorIso Y Z).hom (𝟙 (Xᘁ))
+    simp only [comp_rightAdjointMate, Category.assoc, rightDualFunctor_δ] at hinner houter
+    simp only [rightAdjointMate_id, tensorHom_id, id_tensorHom, rightDualFunctor, unmop_tensorObj,
+      unop_tensorObj, op_tensorObj, unmop_comp, Quiver.Hom.unmop_mop, unmop_whiskerRight,
+      unmop_hom_associator, unop_comp, unop_inv_associator, unop_whiskerLeft,
+      Quiver.Hom.unop_op, assoc, unmop_whiskerLeft, unop_whiskerRight] at hnat₁ houter hnat₂
+    rw [reassoc_of% hnat₁, hinner, ← reassoc_of% houter, reassoc_of% hnat₂]
+  left_unitality X := by
+    change (λ_ ((Xᘁ)ᘁ : C)).hom = _ ▷ (Xᘁ)ᘁ ≫ _ ≫ (λ_ X).homᘁᘁ
+    simp only [doubleRightDualUnitIso, Iso.trans_hom, Iso.symm_hom,
+      rightAdjointMateIso_hom, comp_whiskerRight, doubleRightDualTensorIso, assoc]
+    have hnat := (rightDualTensorIso_inv_naturality (𝟙 (Xᘁ : C)) rightDualUnitIso.hom).symm
+    have hinner := congrArg (rightAdjointMate (C := C)) (rightDualTensorIso_left_unitality C X)
+    simp only [rightAdjointMate_id, tensorHom_id, id_tensorHom, comp_rightAdjointMate,
+      assoc] at hnat hinner
+    rw [reassoc_of% hnat, ← hinner, ← cancel_mono (λ_ ((Xᘁ)ᘁ : C)).inv, Iso.hom_inv_id,
+      rightDualTensorIso_right_unitality C]
+    simp [← comp_rightAdjointMate_assoc]
+  right_unitality X := by
+    change (ρ_ ((Xᘁ)ᘁ : C)).hom = (Xᘁ)ᘁ ◁ _ ≫ _ ≫ (ρ_ X).homᘁᘁ
+    simp only [doubleRightDualUnitIso, Iso.trans_hom, Iso.symm_hom,
+      rightAdjointMateIso_hom, whiskerLeft_comp, doubleRightDualTensorIso, assoc]
+    have hnat := (rightDualTensorIso_inv_naturality rightDualUnitIso.hom (𝟙 (Xᘁ : C))).symm
+    have hinner := congrArg (rightAdjointMate (C := C)) (rightDualTensorIso_right_unitality C X)
+    simp only [rightAdjointMate_id, id_tensorHom, tensorHom_id, comp_rightAdjointMate,
+      assoc] at hnat hinner
+    rw [reassoc_of% hnat, ← hinner, ← cancel_mono (ρ_ ((Xᘁ)ᘁ : C)).inv, Iso.hom_inv_id,
+      rightDualTensorIso_left_unitality C]
+    simp [← comp_rightAdjointMate_assoc]
 
 /-- The canonical monoidal structure on the double-right-dual functor. -/
-@[instance_reducible]
-public def doubleRightDualFunctorMonoidal :
-    (doubleRightDualFunctor C).Monoidal :=
-  (doubleRightDualFunctorCoreMonoidal C).toMonoidal
+@[instance_reducible, instance]
+public def doubleRightDualFunctorMonoidal : (doubleRightDualFunctor C).Monoidal :=
+  doubleRightDualFunctorCoreMonoidal.toMonoidal
 
-attribute [instance] doubleRightDualFunctorMonoidal
+@[simp] theorem doubleRightDualFunctor_ε :
+    ε (doubleRightDualFunctor C) = doubleRightDualUnitIso.hom := rfl
 
-@[simp]
-theorem doubleRightDualFunctor_ε :
-    ε (doubleRightDualFunctor C) = (doubleRightDualUnitIso C).hom :=
-  rfl
+@[simp] theorem doubleRightDualFunctor_η :
+    η (doubleRightDualFunctor C) = doubleRightDualUnitIso.inv := rfl
 
-@[simp]
-theorem doubleRightDualFunctor_η :
-    η (doubleRightDualFunctor C) = (doubleRightDualUnitIso C).inv :=
-  rfl
+@[simp] theorem doubleRightDualFunctor_μ (X Y : C) :
+    μ (doubleRightDualFunctor C) X Y = (doubleRightDualTensorIso X Y).hom := rfl
 
-@[simp]
-theorem doubleRightDualFunctor_μ (X Y : C) :
-    μ (doubleRightDualFunctor C) X Y =
-      (doubleRightDualTensorIso (C := C) X Y).hom :=
-  rfl
-
-@[simp]
-theorem doubleRightDualFunctor_δ (X Y : C) :
-    δ (doubleRightDualFunctor C) X Y =
-      (doubleRightDualTensorIso (C := C) X Y).inv :=
-  rfl
+@[simp] theorem doubleRightDualFunctor_δ (X Y : C) :
+    δ (doubleRightDualFunctor C) X Y = (doubleRightDualTensorIso X Y).inv := rfl
 
 end RightRigid
 
