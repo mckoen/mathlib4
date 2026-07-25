@@ -35,11 +35,9 @@ exact pairings and duals.
 
 ## Future work
 
-* Show that `X ⊗ Y` and `Yᘁ ⊗ Xᘁ` form an exact pairing.
 * Show that the left adjoint mate of the right adjoint mate of a morphism is the morphism itself.
 * Simplify constructions in the case where a symmetry or braiding is present.
 * Show that `ᘁ` gives an equivalence of categories `C ≅ (Cᵒᵖ)ᴹᵒᵖ`.
-* Define pivotal categories (rigid categories equipped with a natural isomorphism `ᘁᘁ ≅ 𝟙 C`).
 
 ## Notes
 
@@ -374,6 +372,15 @@ theorem comp_leftAdjointMate {X Y Z : C} [HasLeftDual X] [HasLeftDual Y] [HasLef
     _ = η_ (ᘁX) X ≫ (ᘁX) ◁ f ≫ (ᘁX) ◁ g := by
       rw [coevaluation_evaluation'']; monoidal
 
+/-- If `X ≅ Y`, then `Xᘁ ≅ Yᘁ`. -/
+@[simps!]
+def rightAdjointMateIso {X Y : C} [HasRightDual X] [HasRightDual Y] (i : X ≅ Y) :
+    Yᘁ ≅ Xᘁ where
+  hom := i.homᘁ
+  inv := i.invᘁ
+  hom_inv_id := by simp [← comp_rightAdjointMate]
+  inv_hom_id := by simp [← comp_rightAdjointMate]
+
 /-- Given an exact pairing on `Y Y'`,
 we get a bijection on hom-sets `(Y' ⊗ X ⟶ Z) ≃ (X ⟶ Y ⊗ Z)`
 by "pulling the string on the left" up or down.
@@ -514,15 +521,12 @@ theorem tensorLeftHomEquiv_symm_coevaluation_comp_whiskerLeft {Y Y' Z : C} [Exac
       rw [whisker_exchange]; monoidal
     _ = _ := by rw [coevaluation_evaluation'']; monoidal
 
-set_option backward.isDefEq.respectTransparency.types false in
 @[simp]
 theorem tensorLeftHomEquiv_symm_coevaluation_comp_whiskerRight {X Y : C} [HasRightDual X]
     [HasRightDual Y] (f : X ⟶ Y) :
     (tensorLeftHomEquiv _ _ _ _).symm (η_ _ _ ≫ f ▷ (Xᘁ)) = (ρ_ _).hom ≫ fᘁ := by
-  dsimp [tensorLeftHomEquiv, rightAdjointMate]
-  simp
+  simp [tensorLeftHomEquiv, rightAdjointMate]
 
-set_option backward.isDefEq.respectTransparency.types false in
 @[simp]
 theorem tensorRightHomEquiv_symm_coevaluation_comp_whiskerLeft {X Y : C} [HasLeftDual X]
     [HasLeftDual Y] (f : X ⟶ Y) :
@@ -530,7 +534,6 @@ theorem tensorRightHomEquiv_symm_coevaluation_comp_whiskerLeft {X Y : C} [HasLef
   dsimp [tensorRightHomEquiv, leftAdjointMate]
   simp
 
-set_option backward.isDefEq.respectTransparency.types false in
 @[simp]
 theorem tensorRightHomEquiv_symm_coevaluation_comp_whiskerRight {Y Y' Z : C} [ExactPairing Y Y']
     (f : Y ⟶ Z) : (tensorRightHomEquiv _ Y _ _).symm (η_ Y Y' ≫ f ▷ Y') = (λ_ _).hom ≫ f :=
@@ -542,17 +545,24 @@ theorem tensorRightHomEquiv_symm_coevaluation_comp_whiskerRight {Y Y' Z : C} [Ex
     _ = _ := by
       rw [evaluation_coevaluation'']; monoidal
 
-set_option backward.isDefEq.respectTransparency.types false in
+lemma tensorLeftHomEquiv_whiskerLeft_comp_evaluation_of_exactPairing
+    {X Y Y' : C} [ExactPairing Y Y'] (f : X ⟶ Y) :
+    (tensorLeftHomEquiv _ _ _ _) (Y' ◁ f ≫ ε_ _ _) = f ≫ (ρ_ _).inv := by
+  calc
+    _ = 𝟙 _ ⊗≫ (η_ Y Y' ▷ X ≫ (Y ⊗ Y') ◁ f) ⊗≫ Y ◁ ε_ Y Y' := by
+      dsimp [tensorLeftHomEquiv]
+      monoidal
+    _ = f ⊗≫ (η_ Y Y' ▷ Y ⊗≫ Y ◁ ε_ Y Y') := by
+      rw [← whisker_exchange]
+      monoidal
+    _ = _ := by
+      rw [ExactPairing.evaluation_coevaluation'']
+      monoidal
+
 @[simp]
 theorem tensorLeftHomEquiv_whiskerLeft_comp_evaluation {Y Z : C} [HasLeftDual Z] (f : Y ⟶ ᘁZ) :
     (tensorLeftHomEquiv _ _ _ _) (Z ◁ f ≫ ε_ _ _) = f ≫ (ρ_ _).inv :=
-  calc
-    _ = 𝟙 _ ⊗≫ (η_ (ᘁZ : C) Z ▷ Y ≫ ((ᘁZ) ⊗ Z) ◁ f) ⊗≫ (ᘁZ) ◁ ε_ (ᘁZ) Z := by
-      dsimp [tensorLeftHomEquiv]; monoidal
-    _ = f ⊗≫ (η_ (ᘁZ) Z ▷ (ᘁZ) ⊗≫ (ᘁZ) ◁ ε_ (ᘁZ) Z) := by
-      rw [← whisker_exchange]; monoidal
-    _ = _ := by
-      rw [evaluation_coevaluation'']; monoidal
+  tensorLeftHomEquiv_whiskerLeft_comp_evaluation_of_exactPairing f
 
 @[simp]
 theorem tensorLeftHomEquiv_whiskerRight_comp_evaluation {X Y : C} [HasLeftDual X] [HasLeftDual Y]
@@ -602,6 +612,62 @@ theorem rightAdjointMate_comp_evaluation {X Y : C} [HasRightDual X] [HasRightDua
     (fᘁ ▷ X) ≫ ε_ X (Xᘁ) = ((Yᘁ) ◁ f) ≫ ε_ Y (Yᘁ) := by
   apply_fun tensorRightHomEquiv _ X (Xᘁ) _
   simp
+
+theorem eq_rightAdjointMate_iff {X Y : C} [HasRightDual X] [HasRightDual Y] (f : X ⟶ Y)
+    (g : Yᘁ ⟶ Xᘁ) :
+    g = fᘁ ↔ g ▷ X ≫ ε_ X Xᘁ = Yᘁ ◁ f ≫ ε_ Y Yᘁ := by
+  constructor
+  · rintro rfl
+    exact rightAdjointMate_comp_evaluation f
+  · intro h
+    rw [← cancel_mono (λ_ Xᘁ).inv]
+    simpa using congrArg (tensorRightHomEquiv Yᘁ X Xᘁ (𝟙_ C))
+      (h.trans (rightAdjointMate_comp_evaluation f).symm)
+
+theorem rightAdjointMate_tensor {X₁ X₂ Y₁ Y₂ : C}
+    [HasRightDual X₁] [HasRightDual X₂] [HasRightDual Y₁] [HasRightDual Y₂]
+    (f : X₁ ⟶ Y₁) (g : X₂ ⟶ Y₂) :
+    letI := hasRightDualTensor (X := X₁) (Y := X₂)
+    letI := hasRightDualTensor (X := Y₁) (Y := Y₂)
+    rightAdjointMate (f ⊗ₘ g) = gᘁ ⊗ₘ fᘁ := by
+  letI : HasRightDual (X₁ ⊗ X₂) := hasRightDualTensor
+  letI : HasRightDual (Y₁ ⊗ Y₂) := hasRightDualTensor
+  symm
+  rw [eq_rightAdjointMate_iff (f ⊗ₘ g) (gᘁ ⊗ₘ fᘁ)]
+  change _ ≫ ε_ _ (_ ⊗ _) =  _ ◁ _ ≫ ε_ _ (_ ⊗ _)
+  simp only [tensor_evaluation]
+  calc
+    _ = 𝟙 _ ⊗≫ ((Y₂ᘁ : C) ◁ (fᘁ ▷ X₁)) ▷ X₂ ⊗≫ (gᘁ ▷ ((X₁ᘁ ⊗ X₁) ⊗ X₂) ≫
+          (X₂ᘁ : C) ◁ (ε_ X₁ (X₁ᘁ) ▷ X₂)) ⊗≫ ε_ X₂ (X₂ᘁ) := by
+      rw [tensorHom_def']
+      monoidal
+    _ = 𝟙 _ ⊗≫
+        ((Y₂ᘁ : C) ◁ (fᘁ ▷ X₁)) ▷ X₂ ⊗≫
+        ((Y₂ᘁ : C) ◁ (ε_ X₁ (X₁ᘁ) ▷ X₂) ≫
+          gᘁ ▷ ((𝟙_ C) ⊗ X₂)) ⊗≫
+        ε_ X₂ (X₂ᘁ) := by
+      rw [← whisker_exchange]
+    _ = 𝟙 _ ⊗≫
+        ((Y₂ᘁ : C) ◁ ((fᘁ ▷ X₁) ≫ ε_ X₁ (X₁ᘁ))) ▷ X₂ ⊗≫
+        ((gᘁ ▷ X₂) ≫ ε_ X₂ (X₂ᘁ)) := by monoidal
+    _ = 𝟙 _ ⊗≫
+        ((Y₂ᘁ : C) ◁ (((Y₁ᘁ : C) ◁ f) ≫ ε_ Y₁ (Y₁ᘁ))) ▷ X₂ ⊗≫
+        (((Y₂ᘁ : C) ◁ g) ≫ ε_ Y₂ (Y₂ᘁ)) := by
+      rw [rightAdjointMate_comp_evaluation, rightAdjointMate_comp_evaluation]
+    _ = 𝟙 _ ⊗≫
+        ((Y₂ᘁ : C) ◁ ((Y₁ᘁ : C) ◁ f)) ▷ X₂ ⊗≫
+        (Y₂ᘁ : C) ◁
+          ((ε_ Y₁ (Y₁ᘁ) ▷ X₂) ≫ (𝟙_ C) ◁ g) ⊗≫
+        ε_ Y₂ (Y₂ᘁ) := by monoidal
+    _ = 𝟙 _ ⊗≫
+        ((Y₂ᘁ : C) ◁ ((Y₁ᘁ : C) ◁ f)) ▷ X₂ ⊗≫
+        (Y₂ᘁ : C) ◁
+          (((Y₁ᘁ ⊗ Y₁) ◁ g) ≫ ε_ Y₁ (Y₁ᘁ) ▷ Y₂) ⊗≫
+        ε_ Y₂ (Y₂ᘁ) := by
+      rw [← whisker_exchange]
+    _ = _ := by
+      rw [tensorHom_def]
+      monoidal
 
 /-- Transport an exact pairing across an isomorphism in the first argument. -/
 @[instance_reducible]
@@ -702,12 +768,44 @@ theorem leftDualIso_id {X Y : C} (p : ExactPairing X Y) : leftDualIso p p = Iso.
   ext
   simp only [leftDualIso, Iso.refl_hom, @leftAdjointMate_id]
 
+/-- The right dual of the unit is isomorphic to the unit. -/
+def rightDualUnitIso [HasRightDual (𝟙_ C)] : (𝟙_ C)ᘁ ≅ 𝟙_ C :=
+  rightDualIso HasRightDual.exact exactPairingUnit
+
 /-- The right dual of a tensor product is isomorphic to the reversed tensor product of
 the right duals. -/
 def rightDualTensorIso (X Y : C) [HasRightDual X] [HasRightDual Y]
     [HasRightDual (X ⊗ Y)] :
     (X ⊗ Y)ᘁ ≅ Yᘁ ⊗ Xᘁ :=
   rightDualIso HasRightDual.exact ExactPairing.tensor
+
+@[reassoc]
+lemma rightDualTensorIso_hom_naturality {X Y X' Y' : C}
+    [HasRightDual X] [HasRightDual Y] [HasRightDual X'] [HasRightDual Y']
+    [HasRightDual (X ⊗ Y)] [HasRightDual (X' ⊗ Y')] (f : X ⟶ X') (g : Y ⟶ Y') :
+    (f ⊗ₘ g)ᘁ ≫ (rightDualTensorIso X Y).hom =
+      (rightDualTensorIso X' Y').hom ≫ (gᘁ ⊗ₘ fᘁ) := by
+  dsimp only [rightDualTensorIso, rightDualIso]
+  rw [← rightAdjointMate_tensor]
+  calc
+    _ = @rightAdjointMate C _ _ _ _
+        (@hasRightDualTensor C _ _ X Y _ _) _ (𝟙 (X ⊗ Y) ≫ (f ⊗ₘ g)) :=
+      (@comp_rightAdjointMate C _ _ _ _ _
+        (@hasRightDualTensor C _ _ X Y _ _) _ _ (𝟙 (X ⊗ Y)) (f ⊗ₘ g)).symm
+    _ = @rightAdjointMate C _ _ _ _
+        (@hasRightDualTensor C _ _ X Y _ _) _ ((f ⊗ₘ g) ≫ 𝟙 (X' ⊗ Y')) := by simp
+    _ = _ :=
+      @comp_rightAdjointMate C _ _ _ _ _
+        (@hasRightDualTensor C _ _ X Y _ _)
+        (@hasRightDualTensor C _ _ X' Y' _ _) _ (f ⊗ₘ g) (𝟙 (X' ⊗ Y'))
+
+@[reassoc]
+lemma rightDualTensorIso_inv_naturality {X Y X' Y' : C}
+    [HasRightDual X] [HasRightDual Y] [HasRightDual X'] [HasRightDual Y']
+    [HasRightDual (X ⊗ Y)] [HasRightDual (X' ⊗ Y')] (f : X ⟶ X') (g : Y ⟶ Y') :
+    (rightDualTensorIso X' Y').inv ≫ (f ⊗ₘ g)ᘁ =
+      (gᘁ ⊗ₘ fᘁ) ≫ (rightDualTensorIso X Y).inv := by
+  simp [← cancel_mono (rightDualTensorIso X Y).hom, rightDualTensorIso_hom_naturality]
 
 /-- The left dual of a tensor product is isomorphic to the reversed tensor product of
 the left duals. -/
