@@ -26,7 +26,7 @@ universe v u
 
 namespace CategoryTheory
 
-variable {C : Type u} [Category.{v} C] [MonoidalCategory C]
+variable {C : Type u} [Category.{v} C] [MonoidalCategory C] [RightRigidCategory C]
 
 /-- A pivotal structure is compatible with a braiding when its induced left pairing
 is the pairing obtained by applying the braiding to the right pairing. -/
@@ -41,7 +41,7 @@ class PivotalCategory.IsBraidingCompatible
 
 /-- A pivotal category is spherical when its left and right traces agree. -/
 class SphericalCategory (C : Type u) [Category.{v} C] [MonoidalCategory C]
-    [PivotalCategory C] : Prop where
+    [RightRigidCategory C] [PivotalCategory C] : Prop where
   leftTrace_eq_rightTrace {X : C} (f : X ⟶ X) : leftTrace f = rightTrace f
 
 /-- A symmetric pivotal category whose pivotal structure is compatible with the braiding

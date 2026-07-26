@@ -21,7 +21,8 @@ universe v u
 
 namespace CategoryTheory
 
-variable {C : Type u} [Category.{v} C] [MonoidalCategory C] [PivotalCategory C]
+variable {C : Type u} [Category.{v} C] [MonoidalCategory C]
+  [RightRigidCategory C] [PivotalCategory C]
 
 /-- The left trace of an endomorphism in a pivotal category. -/
 def leftTrace {X : C} (f : X ⟶ X) : 𝟙_ C ⟶ 𝟙_ C :=
