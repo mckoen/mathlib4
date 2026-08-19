@@ -9,119 +9,109 @@ module
 public import Mathlib.Algebra.Category.ModuleCat.Abelian
 public import Mathlib.Algebra.Category.ModuleCat.Colimits
 public import Mathlib.Algebra.Category.ModuleCat.Monoidal.Closed
-public import Mathlib.Algebra.Homology.BifunctorHomotopy
+public import Mathlib.Algebra.Homology.Linear
 public import Mathlib.Algebra.Homology.Monoidal
-public import Mathlib.Algebra.Homology.ShortComplex.HomologicalComplex
-public import Mathlib.CategoryTheory.Enriched.Basic
+public import Mathlib.CategoryTheory.Enriched.Ordinary.Basic
 public import Mathlib.CategoryTheory.Monoidal.Limits.Preserves
-public import Mathlib.CategoryTheory.Quotient
 public import Mathlib.CategoryTheory.Triangulated.Triangulated
+
+/-!
+# DG categories
+
+A DG category over a commutative ring is a category enriched in cochain complexes of
+modules. This file also constructs its ordinary category `Z0` of closed degree-zero
+morphisms and equips that category with its natural preadditive and linear structures.
+-/
 
 @[expose] public section
 
-universe u u₁ u₂ v w
+universe u w
 
-open CategoryTheory
+open CategoryTheory MonoidalCategory ForgetEnrichment
 
 variable {R : Type w} [CommRing R]
 
-instance : (MonoidalCategory.curriedTensor (ModuleCat.{w} R)).Additive :=
-  MonoidalPreadditive.instAdditiveFunctorCurriedTensor
-
-set_option backward.isDefEq.respectTransparency.types false in
-set_option backward.defeqAttrib.useBackward true in
-instance : ComplexShape.TensorSigns (ComplexShape.down ℤ) where
-  ε' := MonoidHom.mk' (fun (i : ℤ) => (-1 : ℤˣ) ^ i) (zpow_add (-1 : ℤˣ))
-  rel_add p q r (hpq : q + 1 = p) := by dsimp; lia
-  add_rel p q r (hpq : q + 1 = p) := by dsimp; lia
-  ε'_succ := by
-    rintro _ q rfl
-    dsimp
-    erw [zpow_add]
-    rw [zpow_one, mul_neg, mul_one, neg_neg]
-    rfl
-
 /-- A category enriched over cochain complexes of `R`-modules. -/
 abbrev DGCategory (R : Type w) [CommRing R] :=
-  EnrichedCategory (ChainComplex (ModuleCat.{w} R) ℤ)
+  EnrichedCategory (CochainComplex (ModuleCat.{w} R) ℤ)
 
 noncomputable section
 
 namespace DGCategory
 
-local notation "V" => ChainComplex (ModuleCat R) ℤ
+local notation "V" => CochainComplex (ModuleCat R) ℤ
+
+open HomologicalComplex
+
+lemma tensor_add_left {A B C D : V} (f g : A ⟶ B) (h : C ⟶ D) :
+    (f + g) ⊗ₘ h = f ⊗ₘ h + g ⊗ₘ h := by
+  change mapBifunctorMap (f + g) h .. = mapBifunctorMap f h .. + mapBifunctorMap g h ..
+  ext1 n
+  apply mapBifunctor.hom_ext
+  simp
+
+lemma tensor_add_right {A B C D : V} (f : A ⟶ B) (g h : C ⟶ D) :
+    f ⊗ₘ (g + h) = f ⊗ₘ g + f ⊗ₘ h := by
+  change mapBifunctorMap f (g + h) .. = mapBifunctorMap f g .. + mapBifunctorMap f h ..
+  ext1 n
+  apply mapBifunctor.hom_ext
+  simp
+
+lemma tensor_smul_left {A B C D : V} (r : R) (f : A ⟶ B) (h : C ⟶ D) :
+    (r • f) ⊗ₘ h = r • (f ⊗ₘ h) := by
+  change mapBifunctorMap (r • f) h .. = r • mapBifunctorMap f h ..
+  ext1 n
+  apply mapBifunctor.hom_ext
+  simp
+
+lemma tensor_smul_right {A B C D : V} (r : R) (f : A ⟶ B) (h : C ⟶ D) :
+    f ⊗ₘ (r • h) = r • (f ⊗ₘ h) := by
+  change mapBifunctorMap f (r • h) .. = r • mapBifunctorMap f h ..
+  ext1 n
+  apply mapBifunctor.hom_ext
+  simp
 
 /-- The category with the same objects as a DG category and closed degree-zero morphisms. -/
-abbrev Z0 (C : Type u) [DGCategory R C] :=
-  ForgetEnrichment V C
+abbrev Z0 (C : Type u) [DGCategory R C] := ForgetEnrichment V C
 
 variable {C : Type u} [DGCategory R C]
 
-/-- Two closed degree-zero morphisms are homotopic when the corresponding morphisms from the
-tensor unit to the enriched hom complex are homotopic. -/
-def homotopic : HomRel (Z0 (R := R) C) := fun _ _ f g =>
-  Nonempty (Homotopy (ForgetEnrichment.homTo V f) (ForgetEnrichment.homTo V g))
+instance (X Y : Z0 (R := R) C) : AddCommGroup (X ⟶ Y) := inferInstanceAs
+  (AddCommGroup (𝟙_ V ⟶ ((ForgetEnrichment.to V X) ⟶[V] (ForgetEnrichment.to V Y))))
 
-/-- Homotopy of closed degree-zero morphisms is compatible with composition. -/
-noncomputable instance homotopy_congruence :
-    Congruence (homotopic (R := R) (C := C)) where
-  equivalence :=
-    { refl := fun _ => ⟨Homotopy.refl _⟩
-      symm := fun ⟨h⟩ => ⟨h.symm⟩
-      trans := fun ⟨h₁⟩ ⟨h₂⟩ => ⟨h₁.trans h₂⟩ }
-  comp_left := fun f _ _ ⟨h⟩ => ⟨by
-    simp only [ForgetEnrichment.homTo_comp]
-    exact ((HomologicalComplex.mapBifunctorMapHomotopy₂
-      (ForgetEnrichment.homTo V f) h (MonoidalCategory.curriedTensor (ModuleCat R))
-      (ComplexShape.down ℤ)).compLeft
-        (MonoidalCategoryStruct.leftUnitor (MonoidalCategoryStruct.tensorUnit V)).inv).compRight
-          (eComp V _ _ _)⟩
-  comp_right := fun g ⟨h⟩ => ⟨by
-    simp only [ForgetEnrichment.homTo_comp]
-    exact ((HomologicalComplex.mapBifunctorMapHomotopy₁ h
-      (ForgetEnrichment.homTo V g) (MonoidalCategory.curriedTensor (ModuleCat R))
-      (ComplexShape.down ℤ)).compLeft
-        (MonoidalCategoryStruct.leftUnitor (MonoidalCategoryStruct.tensorUnit V)).inv).compRight
-          (eComp V _ _ _)⟩
+instance (X Y : Z0 (R := R) C) : Module R (X ⟶ Y) := inferInstanceAs
+  (Module R (𝟙_ V ⟶ ((ForgetEnrichment.to V X) ⟶[V] (ForgetEnrichment.to V Y))))
 
-/-- The homotopy category `H⁰(C)` of a DG category `C`. -/
-def HomotopyCategory (C : Type u) [DGCategory R C] := Quotient (homotopic (R := R) (C := C))
+set_option backward.isDefEq.respectTransparency false in
+instance z0Preadditive : Preadditive (Z0 (R := R) C) where
+  homGroup X Y := inferInstance
+  add_comp := by
+    intro X Y Z f g h
+    change (λ_ (𝟙_ V)).inv ≫ ((f + g) ⊗ₘ h) ≫ _ = _
+    rw [tensor_add_left]
+    simp only [Preadditive.comp_add, Preadditive.add_comp]
+    rfl
+  comp_add := by
+    intro X Y Z f g h
+    change (λ_ (𝟙_ V)).inv ≫ (f ⊗ₘ (g + h)) ≫ _ = _
+    rw [tensor_add_right]
+    simp only [Preadditive.comp_add, Preadditive.add_comp]
+    rfl
 
-instance : Category (HomotopyCategory (R := R) C) := inferInstanceAs (Category (Quotient homotopic))
-
-namespace HomotopyCategory
-
-/-- The quotient functor from closed degree-zero morphisms to the homotopy category. -/
-def quotient : Z0 (R := R) C ⥤ HomotopyCategory (R := R) C := Quotient.functor _
-
-instance : (quotient (R := R) (C := C)).Full := Quotient.full_functor _
-
-instance : (quotient (R := R) (C := C)).EssSurj := Quotient.essSurj_functor _
-
-/-- Equality in the homotopy category is exactly homotopy of representatives. -/
-theorem quotient_map_eq_iff {X Y : Z0 C} (f g : X ⟶ Y) :
-    quotient.map f = quotient.map g ↔
-      Nonempty (Homotopy (ForgetEnrichment.homTo V f) (ForgetEnrichment.homTo V g)) :=
-  Quotient.functor_map_eq_iff _ _ _
-
-end HomotopyCategory
-
-/-- The currently formalized data of an `R`-linear DG enhancement of a triangulated category
-`T`: a DG category `B` and an equivalence `H⁰(B) ≌ T`.
-
-The requirements that `B` be pretriangulated and that the equivalence preserve the triangulated
-structures are intentionally not included yet. -/
-structure Enhancement (R : Type w) [CommRing R]
-    (T : Type u₂) [Category.{v} T] [Limits.HasZeroObject T] [Preadditive T]
-    [HasShift T ℤ] [∀ n : ℤ, (shiftFunctor T n).Additive]
-    [Pretriangulated T] [IsTriangulated T] where
-  /-- The DG category furnishing the enhancement. -/
-  B : Type u₁
-  /-- The `R`-linear DG enrichment on `B`. -/
-  [dgCategory : DGCategory R B]
-  /-- The equivalence from the homotopy category of `B` to `T`. -/
-  ε : HomotopyCategory (R := R) B ≌ T
-
-attribute [instance] Enhancement.dgCategory
+set_option backward.isDefEq.respectTransparency false in
+instance z0Linear : Linear R (Z0 (R := R) C) where
+  homModule X Y := inferInstance
+  smul_comp := by
+    intro X Y Z r f g
+    change (λ_ (𝟙_ V)).inv ≫ ((r • f) ⊗ₘ g) ≫ _ = _
+    rw [tensor_smul_left]
+    simp only [Linear.comp_smul, Linear.smul_comp]
+    rfl
+  comp_smul := by
+    intro X Y Z f r g
+    change (λ_ (𝟙_ V)).inv ≫ (f ⊗ₘ (r • g)) ≫ _ = _
+    rw [tensor_smul_right]
+    simp only [Linear.comp_smul, Linear.smul_comp]
+    rfl
 
 end DGCategory
