@@ -149,6 +149,10 @@ lemma inverseImage_inverseImage (P : MorphismProperty E) (F : C ⥤ D) (G : D �
 inductive strictMap (P : MorphismProperty C) (F : C ⥤ D) : MorphismProperty D where
   | map {X Y : C} {f : X ⟶ Y} (hf : P f) : strictMap _ _ (F.map f)
 
+/-- The (strict) image of a `MorphismProperty C` by a functor `Arrow C ⥤ Arrow D` -/
+inductive strictMapArrow (P : MorphismProperty C) (F : Arrow C ⥤ Arrow D) : MorphismProperty D where
+  | map {X Y : C} {f : X ⟶ Y} (hf : P f) : strictMapArrow _ _ (F.obj f).hom
+
 lemma map_mem_strictMap (P : MorphismProperty C) (F : C ⥤ D) {X Y : C} (f : X ⟶ Y) (hf : P f) :
     (P.strictMap F) (F.map f) := ⟨hf⟩
 
@@ -262,6 +266,10 @@ lemma inverseImage_sSup (F : C ⥤ D) (P : Set (MorphismProperty D)) :
 /-- The image (up to isomorphisms) of a `MorphismProperty C` by a functor `C ⥤ D` -/
 def map (P : MorphismProperty C) (F : C ⥤ D) : MorphismProperty D := fun _ _ f =>
   ∃ (X' Y' : C) (f' : X' ⟶ Y') (_ : P f'), Nonempty (Arrow.mk (F.map f') ≅ Arrow.mk f)
+
+/-- The image (up to isomorphisms) of a `MorphismProperty C` by a functor `Arrow C ⥤ Arrow D` -/
+def mapArrow (P : MorphismProperty C) (F : Arrow C ⥤ Arrow D) : MorphismProperty D := fun _ _ f ↦
+  ∃ (X' Y' : C) (f' : X' ⟶ Y') (_ : P f'), Nonempty (F.obj f' ≅ Arrow.mk f)
 
 lemma map_mem_map (P : MorphismProperty C) (F : C ⥤ D) {X Y : C} (f : X ⟶ Y) (hf : P f) :
     (P.map F) (F.map f) := ⟨X, Y, f, hf, ⟨Iso.refl _⟩⟩
